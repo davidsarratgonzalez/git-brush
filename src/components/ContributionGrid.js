@@ -259,6 +259,15 @@ const ContributionGrid = ({
     };
   }, [handleMouseMove, handleMouseUp]);
 
+  // Clear selection when tool changes
+  useEffect(() => {
+    if (activeTool !== TOOLS.SELECT && selectionCanvasRef.current) {
+      const ctx = selectionCanvasRef.current.getContext('2d');
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      setSelectionStart(null);
+    }
+  }, [activeTool]);
+
   return (
     <div 
       className="contribution-grid" 
