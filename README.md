@@ -1,6 +1,6 @@
 # git brush! 🎨
 
-A tool to easily draw in your GitHub's profile contribution grid. It includes a feature-rich editor to design your custom pattern and a script to automate the process of creating the contribution grid once you provide it with your pattern.
+A tool to easily draw on your GitHub's profile contribution graph. It includes a feature-rich editor to design your custom pattern and a script to automate the process of creating the contribution graph once you provide it with your pattern.
 
 # How does it work?
 
@@ -20,7 +20,7 @@ GitHub's contribution graph shows your activity through colored squares, where e
 8. Run the script
 9. Wait for the script to finish
 10. Push your changes to the GitHub repository
-11. Enjoy your fancy contribution grid! 🎉
+11. Enjoy your fancy contribution graph! 🎉
 
 ---
 

@@ -13,6 +13,7 @@ import { initializeYearGrid, formatGridDataForExport } from './utils/dataFormat'
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { TOOLS } from './components/PaintTools';
 import { selectionManager } from './utils/selectionManager';
+import MobileBlocker from './components/MobileBlocker';
 
 /**
  * Main App component that orchestrates the git contribution graph editor
@@ -34,6 +35,7 @@ function App() {
   const [activeTool, setActiveTool] = useState(TOOLS.PENCIL);
   const [intensity, setIntensity] = useState(1);
   const [hasCopiedData, setHasCopiedData] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
 
   // Initialize years from stored grid data
   React.useEffect(() => {
@@ -174,75 +176,92 @@ function App() {
     return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    const checkDevice = () => {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+      setIsMobileDevice(isMobile);
+    };
+
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <div className="header-content">
-          <h1>git brush</h1>
-          <YearControls 
-            newYear={newYear}
-            onYearChange={setNewYear}
-            onAddYear={addYear}
-          />
-          <ExportImportControls
-            years={years}
-            gridsData={gridsData}
-            onImport={handleImport}
-          />
-        </div>
-      </header>
-      <main>
-        <div className="grids-container">
-          {years.map((year) => (
-            <YearGridContainer
-              key={year}
-              year={year}
-              onRemove={removeYear}
-              gridData={gridsData[year]}
-              setGridData={(newData) => {
-                setGridsData(prev => ({
-                  ...prev,
-                  [year]: newData
-                }));
-              }}
-              activeTool={activeTool}
-              intensity={intensity}
-              onToolChange={handleToolChange}
-              hasCopiedData={hasCopiedData}
-            />
-          ))}
-        </div>
-      </main>
-      <footer className="App-footer">
-        <div className="footer-content">
-          <a 
-            href="https://davidsarratgonzalez.github.io"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Made with 💚 by <strong>David Sarrat González</strong>
-          </a>
-          <div className="footer-buttons">
-            <a 
-              href={`${process.env.PUBLIC_URL}/downloads/gitbrush.sh`}
-              download="gitbrush.sh"
-              className="download-script-button"
-            >
-              <i className="fas fa-download"></i>
-              Download script
-            </a>
-            <a 
-              href="https://github.com/davidsarratgonzalez/git-brush/blob/main/README.md#how-to-use"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="github-repo-button"
-            >
-              <i className="fab fa-github"></i>
-              How to use
-            </a>
-          </div>
-        </div>
-      </footer>
+      {isMobileDevice ? (
+        <MobileBlocker />
+      ) : (
+        <>
+          <header className="App-header">
+            <div className="header-content">
+              <h1>git brush</h1>
+              <YearControls 
+                newYear={newYear}
+                onYearChange={setNewYear}
+                onAddYear={addYear}
+              />
+              <ExportImportControls
+                years={years}
+                gridsData={gridsData}
+                onImport={handleImport}
+              />
+            </div>
+          </header>
+          <main>
+            <div className="grids-container">
+              {years.map((year) => (
+                <YearGridContainer
+                  key={year}
+                  year={year}
+                  onRemove={removeYear}
+                  gridData={gridsData[year]}
+                  setGridData={(newData) => {
+                    setGridsData(prev => ({
+                      ...prev,
+                      [year]: newData
+                    }));
+                  }}
+                  activeTool={activeTool}
+                  intensity={intensity}
+                  onToolChange={handleToolChange}
+                  hasCopiedData={hasCopiedData}
+                />
+              ))}
+            </div>
+          </main>
+          <footer className="App-footer">
+            <div className="footer-content">
+              <a 
+                href="https://davidsarratgonzalez.github.io"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Made with 💚 by <strong>David Sarrat González</strong>
+              </a>
+              <div className="footer-buttons">
+                <a 
+                  href={`${process.env.PUBLIC_URL}/downloads/gitbrush.sh`}
+                  download="gitbrush.sh"
+                  className="download-script-button"
+                >
+                  <i className="fas fa-download"></i>
+                  Download script
+                </a>
+                <a 
+                  href="https://github.com/davidsarratgonzalez/git-brush/blob/main/README.md#how-to-use"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="github-repo-button"
+                >
+                  <i className="fab fa-github"></i>
+                  How to use
+                </a>
+              </div>
+            </div>
+          </footer>
+        </>
+      )}
     </div>
   );
 }

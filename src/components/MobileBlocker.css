@@ -1,0 +1,77 @@
+/* Full-screen overlay that blocks mobile interaction */
+.mobile-blocker {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #24292e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  overflow: hidden;
+  position: fixed;
+  touch-action: none;
+}
+
+/* Prevents scrolling on the body when mobile blocker is active */
+body.mobile-blocked {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Container for mobile blocker content */
+.mobile-blocker-content {
+  text-align: center;
+  color: #ffffff;
+  padding: 2rem;
+  overflow: hidden;
+}
+
+/* Icon styling in mobile blocker content */
+.mobile-blocker-content i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+/* Heading styling in mobile blocker content */
+.mobile-blocker-content h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+/* Paragraph styling in mobile blocker content */
+.mobile-blocker-content p {
+  font-size: 1.1rem;
+  margin: 0.5rem 0;
+  opacity: 0.8;
+}
+
+/* Repository link button styling */
+.mobile-blocker-content .repo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #238636;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+/* Repository link hover state */
+.mobile-blocker-content .repo-link:hover {
+  background-color: #2ea043;
+}
+
+/* Icon within repository link */
+.mobile-blocker-content .repo-link i {
+  font-size: 1.2rem;
+  margin: 0;
+}
