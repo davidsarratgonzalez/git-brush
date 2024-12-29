@@ -4,6 +4,19 @@
 MULTIPLIER=${2:-200}
 JSON_FILE=$1
 
+# If no JSON file specified, look for a single JSON file in directory
+if [ -z "$JSON_FILE" ]; then
+    # Count JSON files
+    json_count=$(ls -1 *.json 2>/dev/null | wc -l)
+    
+    if [ "$json_count" -eq 1 ]; then
+        JSON_FILE=$(ls *.json)
+    else
+        echo "Error: Please specify a JSON file, or ensure only one JSON file exists in directory"
+        exit 1
+    fi
+fi
+
 # Check if git repo is initialized
 if [ ! -d .git ]; then
     echo "Error: Not a git repository. Please run 'git init' first."
