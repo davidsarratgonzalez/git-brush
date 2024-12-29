@@ -1,57 +1,66 @@
-export const drawSelectionArea = (ctx, startCoords, endCoords, CELL_SIZE, CELL_PADDING, gridData) => {
-  // Clear any previous selection animation
+export function drawSelectionArea(
+  ctx,
+  start,
+  end,
+  cellSize,
+  cellPadding,
+  gridData
+) {
+  if (!start || !end) return;
+
+  // Clear previous selection
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-  const SELECTION_PADDING = 4; // Match the padding from ContributionGrid
+  // Get rectangle bounds
+  const minRow = Math.min(start.row, end.row);
+  const maxRow = Math.max(start.row, end.row);
+  const minCol = Math.min(start.col, end.col);
+  const maxCol = Math.max(start.col, end.col);
 
-  // Calculate cell-based bounds
-  const startCol = Math.min(startCoords.col, endCoords.col);
-  const endCol = Math.max(startCoords.col, endCoords.col);
-  const startRow = Math.min(startCoords.row, endCoords.row);
-  const endRow = Math.max(startCoords.row, endCoords.row);
+  // Calculate exact pixel positions
+  const startX = minCol * (cellSize + cellPadding);
+  const startY = minRow * (cellSize + cellPadding);
+  const width = (maxCol - minCol + 1) * (cellSize + cellPadding) - cellPadding;
+  const height = (maxRow - minRow + 1) * (cellSize + cellPadding) - cellPadding;
 
-  // Draw blue overlay only for valid cells
-  ctx.fillStyle = 'rgba(9, 105, 218, 0.1)';
+  // Add selection padding offset (matches the canvas position offset)
+  const SELECTION_PADDING = 4;
+  const offsetX = SELECTION_PADDING;
+  const offsetY = SELECTION_PADDING;
+
+  // Draw selection rectangle
+  ctx.strokeStyle = '#1a73e8';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
   
-  // Track the actual bounds of valid cells for the border
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-
-  for (let row = startRow; row <= endRow; row++) {
-    for (let col = startCol; col <= endCol; col++) {
-      if (gridData[row] && gridData[row][col] !== null) {
-        // Add padding offset to x,y coordinates
-        const x = col * (CELL_SIZE + CELL_PADDING) + SELECTION_PADDING;
-        const y = row * (CELL_SIZE + CELL_PADDING) + SELECTION_PADDING;
-        
-        ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-        
-        minX = Math.min(minX, x);
-        maxX = Math.max(maxX, x + CELL_SIZE);
-        minY = Math.min(minY, y);
-        maxY = Math.max(maxY, y + CELL_SIZE);
-      }
-    }
-  }
-
-  if (minX !== Infinity) {
-    ctx.save();
-    ctx.strokeStyle = '#0969da';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 4]);
-    ctx.lineDashOffset = -performance.now() / 50;
-    ctx.strokeRect(
-      minX - 1,
-      minY - 1,
-      maxX - minX + 2,
-      maxY - minY + 2
-    );
-    ctx.restore();
-  }
-
-  return requestAnimationFrame(() => 
-    drawSelectionArea(ctx, startCoords, endCoords, CELL_SIZE, CELL_PADDING, gridData)
+  // Account for the offset in the drawing
+  ctx.strokeRect(
+    startX + offsetX,
+    startY + offsetY,
+    width,
+    height
   );
-}; 
+
+  // Draw corner handles
+  const handleSize = 6;
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#1a73e8';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+
+  // Helper function to draw handles
+  const drawHandle = (x, y) => {
+    ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
+    ctx.strokeRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
+  };
+
+  // Draw handles at corners with offset
+  drawHandle(startX + offsetX, startY + offsetY); // Top-left
+  drawHandle(startX + width + offsetX, startY + offsetY); // Top-right
+  drawHandle(startX + offsetX, startY + height + offsetY); // Bottom-left
+  drawHandle(startX + width + offsetX, startY + height + offsetY); // Bottom-right
+
+  return requestAnimationFrame(() => {
+    drawSelectionArea(ctx, start, end, cellSize, cellPadding, gridData);
+  });
+} 

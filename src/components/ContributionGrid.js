@@ -267,8 +267,8 @@ const ContributionGrid = ({
       className="contribution-grid" 
       style={{ 
         position: 'relative',
-        // Add padding to container to accommodate selection border
-        padding: SELECTION_PADDING
+        padding: SELECTION_PADDING,
+        boxSizing: 'border-box'
       }}
     >
       <canvas
@@ -278,21 +278,23 @@ const ContributionGrid = ({
         height={7 * (CELL_SIZE + CELL_PADDING)}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
-        style={{ width: '100%' }}
+        style={{ 
+          width: '100%',
+          display: 'block' // Prevent any extra space
+        }}
       />
       <canvas
         ref={selectionCanvasRef}
-        // Make selection canvas larger by padding amount on each side
         width={53 * (CELL_SIZE + CELL_PADDING) + (SELECTION_PADDING * 2)}
         height={7 * (CELL_SIZE + CELL_PADDING) + (SELECTION_PADDING * 2)}
         style={{
           position: 'absolute',
-          // Position it to overlap the main canvas with offset
           top: -SELECTION_PADDING,
           left: -SELECTION_PADDING,
           pointerEvents: 'none',
           width: `calc(100% + ${SELECTION_PADDING * 2}px)`,
-          height: `calc(100% + ${SELECTION_PADDING * 2}px)`
+          height: `calc(100% + ${SELECTION_PADDING * 2}px)`,
+          display: 'block' // Prevent any extra space
         }}
       />
     </div>
