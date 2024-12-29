@@ -33,6 +33,10 @@ const ContributionGrid = ({
     '#216e39'  // 4: darker
   ], []);
 
+  // Add constants for selection border
+  const SELECTION_BORDER_WIDTH = 2;
+  const SELECTION_PADDING = 4; // Extra space for the border
+
   // Add effect to draw initial grid
   useEffect(() => {
     const ctx = canvasRef.current.getContext('2d');
@@ -259,7 +263,14 @@ const ContributionGrid = ({
   }, [handleMouseMove, handleMouseUp]);
 
   return (
-    <div className="contribution-grid" style={{ position: 'relative' }}>
+    <div 
+      className="contribution-grid" 
+      style={{ 
+        position: 'relative',
+        // Add padding to container to accommodate selection border
+        padding: SELECTION_PADDING
+      }}
+    >
       <canvas
         id={id}
         ref={canvasRef}
@@ -271,15 +282,17 @@ const ContributionGrid = ({
       />
       <canvas
         ref={selectionCanvasRef}
-        width={53 * (CELL_SIZE + CELL_PADDING)}
-        height={7 * (CELL_SIZE + CELL_PADDING)}
+        // Make selection canvas larger by padding amount on each side
+        width={53 * (CELL_SIZE + CELL_PADDING) + (SELECTION_PADDING * 2)}
+        height={7 * (CELL_SIZE + CELL_PADDING) + (SELECTION_PADDING * 2)}
         style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
+          // Position it to overlap the main canvas with offset
+          top: -SELECTION_PADDING,
+          left: -SELECTION_PADDING,
           pointerEvents: 'none',
-          width: '100%',
-          height: '100%'
+          width: `calc(100% + ${SELECTION_PADDING * 2}px)`,
+          height: `calc(100% + ${SELECTION_PADDING * 2}px)`
         }}
       />
     </div>
