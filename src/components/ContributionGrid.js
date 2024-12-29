@@ -5,6 +5,7 @@ import * as GridDrawing from '../utils/gridDrawing';
 import * as CellDrawing from '../utils/cellDrawing';
 import * as RectangleDrawing from '../utils/rectangleDrawing';
 import { drawSelectionArea } from '../utils/selectionDrawing';
+import { selectionManager } from '../utils/selectionManager';
 
 const ContributionGrid = ({ 
   id, 
@@ -58,6 +59,33 @@ const ContributionGrid = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [selectionAnimationFrame]);
+
+  // Function to clear selection
+  const clearSelection = useCallback(() => {
+    if (selectionCanvasRef.current) {
+      const ctx = selectionCanvasRef.current.getContext('2d');
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      setSelectionStart(null);
+    }
+  }, []);
+
+  // Clear selection when tool changes
+  useEffect(() => {
+    if (activeTool !== TOOLS.SELECT) {
+      clearSelection();
+      selectionManager.clearSelection();
+    }
+  }, [activeTool, clearSelection]);
+
+  // Handle selection changes from other grids
+  useEffect(() => {
+    const unsubscribe = selectionManager.subscribe((selection) => {
+      if (!selection || selection.gridId !== id) {
+        clearSelection();
+      }
+    });
+    return unsubscribe;
+  }, [id, clearSelection]);
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -122,6 +150,12 @@ const ContributionGrid = ({
         CELL_PADDING,
         gridData
       );
+      
+      // Register this selection with the manager
+      selectionManager.setSelection({
+        gridId: id,
+        clearFn: clearSelection
+      });
     }
   }, [
     activeTool,
@@ -132,7 +166,9 @@ const ContributionGrid = ({
     GRID_COLORS,
     setGridData,
     onMouseDown,
-    selectionAnimationFrame
+    selectionAnimationFrame,
+    id,
+    clearSelection
   ]);
 
   const handleMouseMove = useCallback((e) => {
@@ -258,15 +294,6 @@ const ContributionGrid = ({
       window.removeEventListener('mouseup', handleGlobalMouseUp);
     };
   }, [handleMouseMove, handleMouseUp]);
-
-  // Clear selection when tool changes
-  useEffect(() => {
-    if (activeTool !== TOOLS.SELECT && selectionCanvasRef.current) {
-      const ctx = selectionCanvasRef.current.getContext('2d');
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      setSelectionStart(null);
-    }
-  }, [activeTool]);
 
   return (
     <div 
