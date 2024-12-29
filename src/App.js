@@ -67,7 +67,7 @@ function App() {
       // Ignore if user is typing in an input
       if (e.target.tagName === 'INPUT') return;
 
-      const key = e.key;
+      const key = e.key.toLowerCase();
       
       // Prevent browser actions for Ctrl+Z and Ctrl+Y
       if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'y')) {
@@ -80,6 +80,24 @@ function App() {
         e.preventDefault();
         const intensity = parseInt(key) - 1;
         handleToolChange(null, intensity);
+      }
+
+      // Handle tool shortcuts
+      switch(key) {
+        case 'q':
+          handleToolChange(TOOLS.PENCIL);
+          break;
+        case 'w':
+          handleToolChange(TOOLS.FILL);
+          break;
+        case 'e':
+          handleToolChange(TOOLS.RECTANGLE);
+          break;
+        case 'r':
+          handleToolChange(TOOLS.RECTANGLE_BORDER);
+          break;
+        default:
+          break;
       }
     };
 
