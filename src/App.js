@@ -222,6 +222,25 @@ function App() {
           >
             Made with 💚 by <strong>David Sarrat González</strong>
           </a>
+          <div className="footer-buttons">
+            <a 
+              href={`${process.env.PUBLIC_URL}/downloads/gitbrush.sh`}
+              download="gitbrush.sh"
+              className="download-script-button"
+            >
+              <i className="fas fa-download"></i>
+              Download script
+            </a>
+            <a 
+              href="https://github.com/davidsarratgonzalez/git-brush/blob/main/README.md#how-to-use"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="github-repo-button"
+            >
+              <i className="fab fa-github"></i>
+              How to use
+            </a>
+          </div>
         </div>
       </footer>
     </div>

@@ -254,28 +254,67 @@ main {
 /* Footer styling */
 .App-footer {
   margin-top: auto;
-  padding: 20px 16px;
   background-color: var(--color-header-bg);
   color: var(--color-header-text);
   font-size: 14px;
 }
 
-/* Footer links */
+/* Footer content wrapper */
+.App-footer .footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  gap: 12px;
+}
+
+/* Footer links - Center the text */
+.App-footer a:first-child {
+  text-align: center;
+  padding-top: 4px;
+  opacity: 0.9;
+}
+
+/* Footer links general styling */
 .App-footer a {
   color: var(--color-header-text);
   text-decoration: none;
   transition: opacity 0.2s ease;
 }
 
-/* Footer link hover state */
-.App-footer a:hover {
+/* Footer link hover state - Don't affect the download button */
+.App-footer a:not(.download-script-button):not(.github-repo-button):hover {
   opacity: 0.8;
   text-decoration: underline;
 }
 
-/* Footer content wrapper */
-.App-footer .footer-content {
-  text-align: center;
+/* Download script button - Keep it compact */
+.download-script-button {
+  padding: 4px 10px;
+  font-size: 14px;
+  color: #ffffff;
+  background-color: #238636;
+  border: 1px solid rgba(27,31,35,0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;  /* Prevent button from shrinking */
+}
+
+.download-script-button:hover {
+  background-color: #2ea043;
+  text-decoration: none;
+}
+
+.download-script-button i {
+  font-size: 16px;
 }
 
 /* Year controls container */
@@ -389,4 +428,46 @@ main {
   margin: 0 8px;
   display: inline-block;
   vertical-align: middle;
+}
+
+/* Footer buttons container */
+.footer-buttons {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 8px;
+  flex-shrink: 0;
+  order: -1;
+}
+
+/* GitHub repo button */
+.github-repo-button {
+  padding: 4px 10px;
+  font-size: 14px;
+  color: #ffffff;
+  background-color: #0969da;  /* GitHub blue */
+  border: 1px solid rgba(27,31,35,0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.github-repo-button:hover {
+  background-color: #0a59c0;
+  text-decoration: none;
+}
+
+.github-repo-button i {
+  font-size: 16px;
+}
+
+/* Hover state exclusion to include footer buttons */
+.App-footer a:not(.download-script-button):not(.github-repo-button):hover {
+  opacity: 0.8;
+  text-decoration: underline;
 }
