@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/git-brush/static/css/main.afc7dd74.css",
+    "main.js": "/git-brush/static/js/main.8f6a3e75.js",
+    "static/js/488.02bfc295.chunk.js": "/git-brush/static/js/488.02bfc295.chunk.js",
+    "index.html": "/git-brush/index.html",
+    "main.afc7dd74.css.map": "/git-brush/static/css/main.afc7dd74.css.map",
+    "main.8f6a3e75.js.map": "/git-brush/static/js/main.8f6a3e75.js.map",
+    "488.02bfc295.chunk.js.map": "/git-brush/static/js/488.02bfc295.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.afc7dd74.css",
+    "static/js/main.8f6a3e75.js"
+  ]
+}
