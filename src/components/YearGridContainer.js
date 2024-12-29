@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import ContributionGrid from './ContributionGrid';
 import { TOOLS, COLORS } from './PaintTools';
 import * as GridDrawing from '../utils/gridDrawing';
@@ -76,7 +76,7 @@ const YearGridContainer = ({
     GridDrawing.drawEmptyGrid(ctx, newGridData, CELL_SIZE, CELL_PADDING, GRID_COLORS);
   };
 
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     const previousState = history.undo();
     if (previousState) {
       setGridData(previousState);
@@ -84,9 +84,9 @@ const YearGridContainer = ({
       const ctx = canvas.getContext('2d');
       GridDrawing.drawEmptyGrid(ctx, previousState, CELL_SIZE, CELL_PADDING, GRID_COLORS);
     }
-  };
+  }, [history, setGridData, year]);
 
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
     const nextState = history.redo();
     if (nextState) {
       setGridData(nextState);
@@ -94,7 +94,7 @@ const YearGridContainer = ({
       const ctx = canvas.getContext('2d');
       GridDrawing.drawEmptyGrid(ctx, nextState, CELL_SIZE, CELL_PADDING, GRID_COLORS);
     }
-  };
+  }, [history, setGridData, year]);
 
   // Add keyboard shortcuts
   useEffect(() => {

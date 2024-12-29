@@ -18,7 +18,7 @@ function App() {
     removeYear: removeYearBase
   } = useYearList();
 
-  const [gridsData, setGridsData] = useState({});
+  const [gridsData, setGridsData] = useLocalStorage();
   const [activeTool, setActiveTool] = useState(TOOLS.PENCIL);
   const [intensity, setIntensity] = useState(1);
 
@@ -53,12 +53,32 @@ function App() {
     setYears(Object.keys(importedGrids).map(Number).sort((a, b) => b - a));
   };
 
-  const handleToolChange = (tool, newIntensity) => {
+  // Define handleToolChange first
+  const handleToolChange = React.useCallback((tool, newIntensity) => {
     if (tool) setActiveTool(tool);
     if (newIntensity !== undefined) {
       setIntensity(newIntensity);
     }
-  };
+  }, [setActiveTool, setIntensity]); // Add proper dependencies
+
+  // Then use it in useEffect
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore if user is typing in an input
+      if (e.target.tagName === 'INPUT') return;
+
+      const key = e.key;
+      // Map keys 1-5 to intensities 0-4
+      if (/^[1-5]$/.test(key)) {
+        e.preventDefault();
+        const intensity = parseInt(key) - 1;
+        handleToolChange(null, intensity);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleToolChange]);
 
   return (
     <div className="App">
