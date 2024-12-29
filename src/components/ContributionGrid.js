@@ -58,14 +58,14 @@ const ContributionGrid = ({
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
     isDrawingRef.current = true;
-    onMouseDown?.(); // Notify parent
+    onMouseDown?.();
 
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = canvasRef.current.width / rect.width;
     const x = (e.clientX - rect.left) * scale;
     const y = (e.clientY - rect.top) * scale;
 
-    const coords = getClosestCell(x, y, gridData, CELL_SIZE, CELL_PADDING);
+    const coords = getClosestCell(x, y, gridData, CELL_SIZE, CELL_PADDING, activeTool === TOOLS.SELECT);
     setSelectionStart(coords);
 
     // Initial draw operation
@@ -114,7 +114,8 @@ const ContributionGrid = ({
         coords,
         coords,
         CELL_SIZE,
-        CELL_PADDING
+        CELL_PADDING,
+        gridData
       );
       setSelectionAnimationFrame(animationFrame);
     }
@@ -138,7 +139,7 @@ const ContributionGrid = ({
     const x = (e.clientX - rect.left) * scale;
     const y = (e.clientY - rect.top) * scale;
 
-    const coords = getClosestCell(x, y, gridData, CELL_SIZE, CELL_PADDING);
+    const coords = getClosestCell(x, y, gridData, CELL_SIZE, CELL_PADDING, activeTool === TOOLS.SELECT);
 
     if (activeTool === TOOLS.PENCIL) {
       CellDrawing.drawCell(
@@ -177,7 +178,8 @@ const ContributionGrid = ({
         selectionStart,
         coords,
         CELL_SIZE,
-        CELL_PADDING
+        CELL_PADDING,
+        gridData
       );
       setSelectionAnimationFrame(animationFrame);
     }

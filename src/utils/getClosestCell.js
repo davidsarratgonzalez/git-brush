@@ -7,7 +7,8 @@ export default function getClosestCell(
   y,
   gridData,
   cellSize,
-  cellPadding
+  cellPadding,
+  isSelecting = false
 ) {
   const baseCol = Math.floor(x / (cellSize + cellPadding));
   const baseRow = Math.floor(y / (cellSize + cellPadding));
@@ -37,20 +38,25 @@ export default function getClosestCell(
     }
   }
 
-  // Find valid cell boundaries
+  // For selection tool, just clamp to grid bounds without checking for null cells
+  if (isSelecting) {
+    return {
+      row: Math.max(0, Math.min(row, gridData.length - 1)),
+      col: Math.max(0, Math.min(col, gridData[0].length - 1))
+    };
+  }
+
+  // For other tools, find nearest valid cell
   const maxCol = gridData[0].length - 1;
   const maxRow = gridData.length - 1;
 
-  // Clamp to valid cells only (where cell !== null)
   let validCol = Math.max(0, Math.min(col, maxCol));
   let validRow = Math.max(0, Math.min(row, maxRow));
 
-  // Find nearest valid cell if current cell is null
   while (validCol >= 0 && gridData[validRow][validCol] === null) {
     validCol--;
   }
   
-  // If no valid cell found to the left, try right
   if (validCol < 0) {
     validCol = 0;
     while (validCol <= maxCol && gridData[validRow][validCol] === null) {
@@ -58,7 +64,6 @@ export default function getClosestCell(
     }
   }
 
-  // If still no valid cell found, clamp to nearest valid row
   if (validCol > maxCol) {
     validCol = Math.min(col, maxCol);
   }

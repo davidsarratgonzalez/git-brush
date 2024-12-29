@@ -1,4 +1,4 @@
-export const drawSelectionArea = (ctx, startCoords, endCoords, CELL_SIZE, CELL_PADDING) => {
+export const drawSelectionArea = (ctx, startCoords, endCoords, CELL_SIZE, CELL_PADDING, gridData) => {
   // Clear any previous selection animation
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -8,53 +8,52 @@ export const drawSelectionArea = (ctx, startCoords, endCoords, CELL_SIZE, CELL_P
   const startRow = Math.min(startCoords.row, endCoords.row);
   const endRow = Math.max(startCoords.row, endCoords.row);
 
-  // Get grid data from canvas dimensions
-  const totalRows = Math.floor(ctx.canvas.height / (CELL_SIZE + CELL_PADDING));
-  const totalCols = Math.floor(ctx.canvas.width / (CELL_SIZE + CELL_PADDING));
-
   // Draw blue overlay only for valid cells
   ctx.fillStyle = 'rgba(9, 105, 218, 0.1)'; // Light blue with transparency
-  for (let row = startRow; row <= endRow && row < totalRows; row++) {
-    for (let col = startCol; col <= endCol && col < totalCols; col++) {
-      // Skip drawing if we're outside valid grid bounds
-      if (row < 0 || col < 0) continue;
+  
+  // Track the actual bounds of valid cells for the border
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
 
-      const x = col * (CELL_SIZE + CELL_PADDING);
-      const y = row * (CELL_SIZE + CELL_PADDING);
-      
-      // Only draw if the cell position is valid (would contain a cell in the grid)
-      if (x < ctx.canvas.width && y < ctx.canvas.height) {
+  for (let row = startRow; row <= endRow; row++) {
+    for (let col = startCol; col <= endCol; col++) {
+      // Only draw if this is a valid cell (not null)
+      if (gridData[row] && gridData[row][col] !== null) {
+        const x = col * (CELL_SIZE + CELL_PADDING);
+        const y = row * (CELL_SIZE + CELL_PADDING);
+        
         ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+        
+        // Update actual bounds
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x + CELL_SIZE);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y + CELL_SIZE);
       }
     }
   }
 
-  // Calculate border coordinates, clamped to valid grid area
-  const x1 = Math.max(0, startCol * (CELL_SIZE + CELL_PADDING));
-  const y1 = Math.max(0, startRow * (CELL_SIZE + CELL_PADDING));
-  const x2 = Math.min(
-    ctx.canvas.width,
-    (endCol + 1) * (CELL_SIZE + CELL_PADDING) - CELL_PADDING
-  );
-  const y2 = Math.min(
-    ctx.canvas.height,
-    (endRow + 1) * (CELL_SIZE + CELL_PADDING) - CELL_PADDING
-  );
-
-  const width = x2 - x1;
-  const height = y2 - y1;
-
-  // Draw animated dashed border
-  ctx.save();
-  ctx.strokeStyle = '#0969da';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([4, 4]);
-  ctx.lineDashOffset = -performance.now() / 50; // Animate dash
-  ctx.strokeRect(x1, y1, width, height);
-  ctx.restore();
+  // Only draw border if we found valid cells
+  if (minX !== Infinity) {
+    // Draw animated dashed border around the actual content
+    ctx.save();
+    ctx.strokeStyle = '#0969da';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.lineDashOffset = -performance.now() / 50; // Animate dash
+    ctx.strokeRect(
+      minX - 1, // Slight offset for border
+      minY - 1,
+      maxX - minX + 2, // Add offset to both sides
+      maxY - minY + 2
+    );
+    ctx.restore();
+  }
 
   // Request next animation frame
   return requestAnimationFrame(() => 
-    drawSelectionArea(ctx, startCoords, endCoords, CELL_SIZE, CELL_PADDING)
+    drawSelectionArea(ctx, startCoords, endCoords, CELL_SIZE, CELL_PADDING, gridData)
   );
 }; 
