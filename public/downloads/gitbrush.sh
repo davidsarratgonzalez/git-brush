@@ -29,187 +29,56 @@ if [ ! -f "$JSON_FILE" ]; then
     exit 1
 fi
 
+# Hide cursor and save screen state
+tput civis 2>/dev/null || true
+tput smcup 2>/dev/null || true
+
+# Handle window resize by redrawing the dashboard
+trap 'draw_dashboard' WINCH
+trap 'cleanup_and_exit' EXIT INT TERM
+
+cleanup_and_exit() {
+    tput rmcup 2>/dev/null || true
+    tput cnorm 2>/dev/null || true
+    rm -f temp_file 2>/dev/null
+    exit 0
+}
+
+# Function to draw the dashboard
+draw_dashboard() {
+    # Get current terminal size
+    local term_height
+    local term_width
+    term_height=$(tput lines 2>/dev/null || echo 24)
+    term_width=$(tput cols 2>/dev/null || echo 80)
+    
+    # Only clear and redraw if we have minimum required space
+    if [ "$term_height" -ge 10 ] && [ "$term_width" -ge 50 ]; then
+        clear
+        echo -e "Thank you for using git brush! 🎨"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "⏳ Progress: [                    ] 0%"
+        echo "📅 Current date:"
+        echo "📅 Day progress:"
+        echo "📅 Year progress:"
+        echo "📈 Total progress:"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo -e "Made with ❤️  by David Sarrat González"
+    fi
+}
+
 # Create initial README.md with git brush link
 echo "Made with [git brush](https://www.github.com/davidsarratgonzalez/git-brush)! 🎨" > README.md
-git add README.md
+git add README.md 2>/dev/null
+GIT_AUTHOR_DATE="$(date -u +"%Y-%m-%d %H:%M:%S")" \
+GIT_COMMITTER_DATE="$(date -u +"%Y-%m-%d %H:%M:%S")" \
 git commit -m "Painted my GitHub contribution graph! 🎨
 
-Co-authored-by: David Sarrat González <113605621+davidsarratgonzalez@users.noreply.github.com>" > /dev/null
+Co-authored-by: David Sarrat González <113605621+davidsarratgonzalez@users.noreply.github.com>" >/dev/null 2>&1
 
-# Initialize contribution grid
-declare -A grid
-declare -A commit_counts
-declare -A year_commits
-weeks=53 # Account for years that span 53 weeks
-days=7
-current_year=""
-
-# We'll keep track of terminal width/height.
-ROWS=$(stty size | awk '{print $1}')
-COLS=$(stty size | awk '{print $2}')
-
-# A function to handle terminal resize (SIGWINCH).
-handle_resize() {
-    # Recalculate stty size
-    ROWS=$(stty size | awk '{print $1}')
-    COLS=$(stty size | awk '{print $2}')
-    
-    # Clear and redraw
-    clear
-    
-    # Redraw current year grid
-    if [ ! -z "$current_year" ]; then
-        draw_empty_grid "$current_year"
-        
-        # Re-print the current state of the grid
-        for ((w=0; w<weeks; w++)); do
-            for ((d=0; d<days; d++)); do
-                tput cup $((d + 2)) $((w * 2))
-                echo -n "${grid[$w,$d]} "
-            done
-        done
-        
-        # Re-print the progress section
-        local progress_y=$((ROWS - 3))
-        local progress_x=0
-        
-        # Ensure we have room to display progress
-        if [ $progress_y -gt 0 ]; then
-            # Position and print progress text
-            tput cup $progress_y $progress_x
-            echo -n "Progress: "
-            
-            # Calculate filled cells
-            local total_cells=$((weeks * days))
-            local filled_cells=0
-            for ((w=0; w<weeks; w++)); do
-                for ((d=0; d<days; d++)); do
-                    if [ "${grid[$w,$d]}" != "${NO_CONTRIBUTION}■${RESET}" ]; then
-                        ((filled_cells++))
-                    fi
-                done
-            done
-            
-            # Calculate and display percentage with bounds checking
-            local percentage=0
-            if [ $total_cells -gt 0 ]; then
-                percentage=$((filled_cells * 100 / total_cells))
-                # Ensure percentage doesn't exceed 100
-                [ $percentage -gt 100 ] && percentage=100
-            fi
-            echo -n "$percentage% complete"
-            
-            # Draw progress bar on next line if we have space
-            if [ $((progress_y + 1)) -lt $ROWS ]; then
-                tput cup $((progress_y + 1)) $progress_x
-                # Leave room for brackets and ensure positive width
-                local bar_width=$((COLS - 2))
-                [ $bar_width -lt 0 ] && bar_width=0
-                
-                local filled_width=0
-                [ $bar_width -gt 0 ] && filled_width=$((bar_width * percentage / 100))
-                
-                echo -n "["
-                for ((i=0; i<filled_width && i<bar_width; i++)); do
-                    echo -n "="
-                done
-                for ((i=filled_width; i<bar_width; i++)); do
-                    echo -n " "
-                done
-                echo -n "]"
-            fi
-        fi
-    fi
-}
-
-# Trap SIGWINCH to handle terminal resize
-trap handle_resize WINCH
-
-# Clear screen, switch to alternate screen, and hide cursor
-tput smcup
+# Clear screen and show initial dashboard
 clear
-tput civis
-
-# Make sure we clean up and restore screen/cursor on exit
-trap 'tput rmcup; tput cnorm; exit 0' EXIT
-
-# ANSI color codes matching GitHub's contribution colors
-NO_CONTRIBUTION=$'\e[38;5;238m'  # Dark gray
-LEVEL1=$'\e[38;5;22m'   # Lightest green
-LEVEL2=$'\e[38;5;28m'   # Light green
-LEVEL3=$'\e[38;5;34m'   # Medium green
-LEVEL4=$'\e[38;5;40m'   # Dark green
-RED=$'\e[38;5;196m'     # Red color for heart
-WHITE=$'\e[38;5;255m'   # White color for non-year days
-RESET=$'\e[0m'
-
-# Function to draw empty grid for a year
-draw_empty_grid() {
-    local year=$1
-    # Get first day of year (0=Sunday)
-    local start_day=$(date -j -f "%Y-%m-%d" "$year-01-01" "+%w")
-    # Get last day of year (0=Sunday)
-    local end_day=$(date -j -f "%Y-%m-%d" "$year-12-31" "+%w")
-    
-    # Calculate if it's a leap year
-    local is_leap_year=0
-    if [ $((year % 4)) -eq 0 ] && [ $((year % 100)) -ne 0 ] || [ $((year % 400)) -eq 0 ]; then
-        is_leap_year=1
-    fi
-    
-    # Calculate total days in year
-    local total_days=$((365 + is_leap_year))
-    
-    # Initialize empty grid with gray squares
-    for ((d=0; d<days; d++)); do
-        for ((w=0; w<weeks; w++)); do
-            grid[$w,$d]=" "
-            commit_counts[$w,$d]=0
-            grid[$w,$d]="${NO_CONTRIBUTION}■${RESET}"
-        done
-    done
-
-    # Draw initial grid display
-    echo -e "\n🎨 Contribution grid for $year:\n"
-    
-    # Print grid - only first and last week's days
-    for ((d=0; d<days; d++)); do
-        # First week
-        if [ $d -lt $start_day ]; then
-            # Days before year starts are white
-            echo -n "${WHITE}■${RESET} "
-        else
-            # Days in first week of year are gray (will be colored later if needed)
-            echo -n "${NO_CONTRIBUTION}■${RESET} "
-        fi
-        
-        # Print gray squares for middle weeks
-        for ((w=1; w<weeks-1; w++)); do
-            echo -n "${NO_CONTRIBUTION}■${RESET} "
-        done
-        
-        # Last week
-        if [ $d -gt $end_day ]; then
-            # Days after year ends are white
-            echo -n "${WHITE}■${RESET}"
-        else
-            # Days in last week of year are gray (will be colored later if needed)
-            echo -n "${NO_CONTRIBUTION}■${RESET}"
-        fi
-        echo
-    done
-
-    # Draw progress display
-    echo -e "\n📊 Progress dashboard"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "⏳ Progress: [                    ] 0%"
-    echo "📅 Current date:                             "
-    echo "📅 Day progress:                         "
-    echo "📅 Year progress:                            "
-    echo "📈 Total progress:                           "
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -e "Made with ${RED}❤️${RESET}  by David Sarrat González"
-}
+draw_dashboard
 
 # Count total commits needed
 total_commits=0
@@ -223,6 +92,13 @@ done < "$JSON_FILE"
 commits_done=0
 start_time=$(date +%s)
 last_commit_date=""
+current_year=""
+# Use regular array instead of associative array for compatibility
+declare year_commits
+declare year_commits_idx
+
+# Disable git auto gc messages
+git config gc.auto 0
 
 # Read JSON file and process commits
 while IFS= read -r line; do
@@ -233,41 +109,50 @@ while IFS= read -r line; do
     if [ ! -z "$date" ] && [ ! -z "$intensity" ]; then
         year=$(echo "$date" | cut -d'-' -f1)
         
-        # If year changes, reset grid and draw new one
+        # If year changes, initialize year commits
         if [ "$year" != "$current_year" ]; then
             current_year=$year
-            year_commits[$current_year]=0
-            # Clear all arrays
-            for ((w=0; w<weeks; w++)); do
-                for ((d=0; d<days; d++)); do
-                    grid[$w,$d]=" "
-                    commit_counts[$w,$d]=0
-                done
+            # Find or create index for this year
+            year_found=0
+            for ((i=0; i<${#year_commits_idx[@]}; i++)); do
+                if [ "${year_commits_idx[$i]}" = "$year" ]; then
+                    year_found=1
+                    break
+                fi
             done
-            clear
-            draw_empty_grid "$current_year"
+            if [ $year_found -eq 0 ]; then
+                year_commits_idx[${#year_commits_idx[@]}]=$year
+                year_commits[${#year_commits[@]}]=0
+            fi
         fi
         
-        # Calculate days since start of year
-        start_of_year=$(date -j -f "%Y-%m-%d" "${current_year}-01-01" "+%s")
-        current_date=$(date -j -f "%Y-%m-%d" "$date" "+%s")
-        days_since_start=$(( (current_date - start_of_year) / (24 * 60 * 60) ))
-        
-        # Calculate week and day (0=Sunday)
-        week=$((days_since_start / 7))
-        day=$(date -j -f "%Y-%m-%d" "$date" "+%w")
-        
-        # Update commit count for this cell
-        commit_count=$((intensity * MULTIPLIER))
-        commit_counts[$week,$day]=$((commit_counts[$week,$day] + commit_count))
-        
         # Make the actual commits
+        commit_count=$((intensity * MULTIPLIER))
         for ((i=1; i<=commit_count; i++)); do
             echo "Commit $i on $date" > temp_file
-            git add temp_file
-            GIT_AUTHOR_DATE="$date"T12:00:00-05:00" GIT_COMMITTER_DATE="$date"T12:00:00-05:00" git commit -m "$date:$i 🎨" > /dev/null
+            git add temp_file 2>/dev/null
+            
+            # Set commit time to a random time during working hours (9AM-5PM)
+            hour=$((RANDOM % 8 + 9))
+            minute=$((RANDOM % 60))
+            second=$((RANDOM % 60))
+            commit_time=$(printf "%02d:%02d:%02d" $hour $minute $second)
+            
+            # Set both author and committer dates with UTC timezone
+            commit_date="$date $commit_time +0000"
+            export GIT_AUTHOR_DATE="$commit_date"
+            export GIT_COMMITTER_DATE="$commit_date"
+            
+            git commit -m "$date:$i 🎨" >/dev/null 2>&1
             commits_done=$((commits_done + 1))
-            year_commits[$current_year]=$((year_commits[$current_year] + 1))
+            
+            # Update year commits count
+            for ((j=0; j<${#year_commits_idx[@]}; j++)); do
+                if [ "${year_commits_idx[$j]}" = "$year" ]; then
+                    year_commits[$j]=$((year_commits[$j] + 1))
+                    break
+                fi
+            done
             last_commit_date=$date
             
             # Update progress display every 5 commits
@@ -287,56 +172,59 @@ while IFS= read -r line; do
                     progress_width=$((progress * 20 / 100))
                     
                     # Update progress display
-                    tput cup $((days + 6)) 11
-                    printf "[%-20s] %3d%% (ETA: %02d:%02d)" "$(printf "%${progress_width}s" | tr ' ' '#')" $progress $eta_min $eta_sec
-                    tput cup $((days + 7)) 35
-                    echo -n "$date"
+                    draw_dashboard
                     
-                    # Clear previous day progress before showing new one
-                    tput cup $((days + 8)) 35
-                    printf "%-30s" " " # Clear the line
-                    tput cup $((days + 8)) 35
-                    echo -n "$i/$commit_count (Intensity: $intensity)"
-                    
-                    # Clear previous year progress
-                    tput cup $((days + 9)) 35
-                    printf "%-30s" " "
-                    tput cup $((days + 9)) 35
-                    echo -n "${year_commits[$current_year]}/$total_commits"
-                    
-                    tput cup $((days + 10)) 35
-                    echo -n "$commits_done/$total_commits"
+                    # Only update display if terminal is large enough
+                    if [ "$(tput lines 2>/dev/null || echo 24)" -ge 10 ] && [ "$(tput cols 2>/dev/null || echo 80)" -ge 50 ]; then
+                        tput cup 2 11 2>/dev/null || true
+                        printf "[%-20s] %3d%% (ETA: %02d:%02d)" "$(printf "%${progress_width}s" | tr ' ' '#')" $progress $eta_min $eta_sec
+                        tput cup 3 35 2>/dev/null || true
+                        echo -n "$date"
+                        tput cup 4 35 2>/dev/null || true
+                        echo -n "$i/$commit_count"
+                        tput cup 5 35 2>/dev/null || true
+                        # Find current year's commits
+                        for ((j=0; j<${#year_commits_idx[@]}; j++)); do
+                            if [ "${year_commits_idx[$j]}" = "$year" ]; then
+                                echo -n "${year_commits[$j]}/$total_commits"
+                                break
+                            fi
+                        done
+                        tput cup 6 35 2>/dev/null || true
+                        echo -n "$commits_done/$total_commits"
+                    fi
                 fi
             fi
-            
-            # Update grid cell based on current progress
-            if [ $i -eq 0 ]; then
-                grid[$week,$day]="${NO_CONTRIBUTION}■${RESET}"
-            elif [ $i -le $MULTIPLIER ]; then
-                grid[$week,$day]="${LEVEL1}■${RESET}"
-            elif [ $i -le $((MULTIPLIER * 2)) ]; then
-                grid[$week,$day]="${LEVEL2}■${RESET}"
-            elif [ $i -le $((MULTIPLIER * 3)) ]; then
-                grid[$week,$day]="${LEVEL3}■${RESET}"
-            elif [ $i -le $((MULTIPLIER * 4)) ]; then
-                grid[$week,$day]="${LEVEL4}■${RESET}"
-            fi
-            
-            # Update grid display with cursor positioning
-            tput cup $((day + 2)) $((week * 2))
-            echo -n "${grid[$week,$day]} "
         done
-        rm temp_file
+        rm -f temp_file 2>/dev/null
     fi
 done < "$JSON_FILE"
 
-# Show cursor again before final message
-tput cnorm
+# Function to draw final message
+draw_final_message() {
+    clear
+    echo "Thank you for using git brush! 🎨"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "We have painted your contribution graph! 🎉"
+    echo "⚠️  Don't forget to push your changes to GitHub!"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Made with ❤️  by David Sarrat González"
+    echo
+    echo "Press any key to exit..."
+}
 
-# Final completion message (still in alternate screen until the script exits)
-tput cup $((days + 13)) 0
-echo "We have successfully painted your GitHub contribution graph! 🎉"
-echo "Don't forget to push your changes to GitHub!"
+# Update trap to use final message function
+trap 'draw_final_message' WINCH
 
-# Exit the script
+# Draw initial final message
+draw_final_message
+
+# Wait for user input before cleanup
+read -n 1 -s
+
+# Cleanup and exit handled by trap
+trap - WINCH EXIT INT TERM
+tput rmcup 2>/dev/null || true
+tput cnorm 2>/dev/null || true
+clear
 exit 0
