@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './App.css';
 import YearGridContainer from './components/YearGridContainer';
 import YearControls from './components/YearControls';
 import useYearList from './hooks/useYearList';
 import ExportImportControls from './components/ExportImportControls';
 import { initializeYearGrid } from './utils/dataFormat';
+import { useLocalStorage } from './hooks/useLocalStorage';
 
 function App() {
   const {
@@ -16,13 +17,17 @@ function App() {
     removeYear: removeYearBase
   } = useYearList();
 
-  const [gridsData, setGridsData] = useState({});
+  const [gridsData, setGridsData] = useLocalStorage();
 
-  // Wrap addYear to initialize grid data
+  React.useEffect(() => {
+    if (Object.keys(gridsData).length > 0) {
+      setYears(Object.keys(gridsData).map(Number).sort((a, b) => b - a));
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const addYear = () => {
     if (!years.includes(newYear)) {
       addYearBase();
-      // Initialize empty grid for the new year
       const emptyGrid = initializeYearGrid(newYear);
       setGridsData(prev => ({
         ...prev,
@@ -31,7 +36,6 @@ function App() {
     }
   };
 
-  // Clean up grid data when removing a year
   const removeYear = (yearToRemove) => {
     removeYearBase(yearToRemove);
     setGridsData(prev => {
