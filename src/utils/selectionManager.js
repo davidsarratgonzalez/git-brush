@@ -3,6 +3,7 @@ class SelectionManager {
     this.currentSelection = null;
     this.onSelectionChange = null;
     this.copiedData = null;
+    this.onCopiedDataChange = null;
   }
 
   setSelection(selection) {
@@ -41,7 +42,8 @@ class SelectionManager {
       const row = [];
       for (let c = startCol; c <= endCol; c++) {
         // Only copy non-null cells (including empty/gray ones)
-        row.push(gridData[r][c] !== null ? gridData[r][c] : null);
+        const cell = gridData[r][c];
+        row.push(cell !== null ? cell : null);
       }
       copiedArea.push(row);
     }
@@ -51,12 +53,17 @@ class SelectionManager {
       width: endCol - startCol + 1,
       height: endRow - startRow + 1
     };
+
+    // Notify listeners that copied data changed
+    if (this.onCopiedDataChange) {
+      this.onCopiedDataChange(true);
+    }
   }
 
   cutSelection(gridData, setGridData) {
     if (!this.currentSelection) return;
     
-    // Copy first
+    // Copy first (reuse the copy functionality)
     this.copySelection(gridData);
     
     // Then clear the selected area
@@ -99,6 +106,20 @@ class SelectionManager {
     this.onSelectionChange = callback;
     return () => {
       this.onSelectionChange = null;
+    };
+  }
+
+  clearCopiedData() {
+    this.copiedData = null;
+    if (this.onCopiedDataChange) {
+      this.onCopiedDataChange(false);
+    }
+  }
+
+  subscribeToCopiedData(callback) {
+    this.onCopiedDataChange = callback;
+    return () => {
+      this.onCopiedDataChange = null;
     };
   }
 }

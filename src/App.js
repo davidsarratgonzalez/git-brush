@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import YearGridContainer from './components/YearGridContainer';
 import YearControls from './components/YearControls';
@@ -7,6 +7,7 @@ import ExportImportControls from './components/ExportImportControls';
 import { initializeYearGrid, formatGridDataForExport } from './utils/dataFormat';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { TOOLS } from './components/PaintTools';
+import { selectionManager } from './utils/selectionManager';
 
 function App() {
   const {
@@ -21,6 +22,7 @@ function App() {
   const [gridsData, setGridsData] = useLocalStorage();
   const [activeTool, setActiveTool] = useState(TOOLS.PENCIL);
   const [intensity, setIntensity] = useState(1);
+  const [hasCopiedData, setHasCopiedData] = useState(false);
 
   React.useEffect(() => {
     if (Object.keys(gridsData).length > 0) {
@@ -96,6 +98,9 @@ function App() {
         case 'r':
           handleToolChange(TOOLS.RECTANGLE_BORDER);
           break;
+        case 't':
+          handleToolChange(TOOLS.SELECT);
+          break;
         default:
           break;
       }
@@ -145,6 +150,14 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [years, gridsData]);
 
+  // Subscribe to copied data changes at App level
+  useEffect(() => {
+    const unsubscribe = selectionManager.subscribeToCopiedData(setHasCopiedData);
+    // Initialize state
+    setHasCopiedData(selectionManager.hasCopiedData());
+    return unsubscribe;
+  }, []);
+
   return (
     <div className="App">
       <header className="App-header">
@@ -179,6 +192,7 @@ function App() {
               activeTool={activeTool}
               intensity={intensity}
               onToolChange={handleToolChange}
+              hasCopiedData={hasCopiedData}
             />
           ))}
         </div>

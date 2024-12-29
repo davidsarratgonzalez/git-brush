@@ -22,7 +22,8 @@ const YearGridContainer = ({
   setGridData,
   activeTool,
   intensity,
-  onToolChange
+  onToolChange,
+  hasCopiedData
 }) => {
   const id = `canvas-${year}`;
   const history = useHistory(gridData);
@@ -192,7 +193,7 @@ const YearGridContainer = ({
               <button 
                 className={`tool-button ${activeTool === TOOLS.PASTE ? 'active' : ''}`}
                 onClick={() => handleToolChange(TOOLS.PASTE)}
-                disabled={!selectionManager.hasCopiedData()}
+                disabled={!hasCopiedData}
                 title="Paste (Ctrl+V)"
               >
                 <i className="far fa-clipboard"></i>

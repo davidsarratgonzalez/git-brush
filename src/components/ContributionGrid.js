@@ -24,6 +24,7 @@ const ContributionGrid = ({
   const [selectionAnimationFrame, setSelectionAnimationFrame] = useState(null);
   const selectionCanvasRef = useRef(null); // Separate canvas for selection overlay
   const [pastePreviewPos, setPastePreviewPos] = useState(null);
+  const [pasteOffset, setPasteOffset] = useState({ row: 0, col: 0 });
 
   const CELL_SIZE = 10;
   const CELL_PADDING = 2;
@@ -120,19 +121,21 @@ const ContributionGrid = ({
       
       // Draw preview
       for (let r = 0; r < height; r++) {
-        if (pastePreviewPos.row + r >= gridData.length) continue;
+        if (pastePreviewPos.row + r + pasteOffset.row >= gridData.length || 
+            pastePreviewPos.row + r + pasteOffset.row < 0) continue;
         
         for (let c = 0; c < width; c++) {
-          if (pastePreviewPos.col + c >= gridData[0].length) continue;
+          if (pastePreviewPos.col + c + pasteOffset.col >= gridData[0].length || 
+              pastePreviewPos.col + c + pasteOffset.col < 0) continue;
           
           // Skip null cells in the copied data
           if (data[r][c] === null) continue;
           
           // Only show preview on valid cells (not null)
-          if (gridData[pastePreviewPos.row + r][pastePreviewPos.col + c] === null) continue;
+          if (gridData[pastePreviewPos.row + r + pasteOffset.row][pastePreviewPos.col + c + pasteOffset.col] === null) continue;
           
-          const x = (pastePreviewPos.col + c) * (CELL_SIZE + CELL_PADDING);
-          const y = (pastePreviewPos.row + r) * (CELL_SIZE + CELL_PADDING);
+          const x = (pastePreviewPos.col + c + pasteOffset.col) * (CELL_SIZE + CELL_PADDING);
+          const y = (pastePreviewPos.row + r + pasteOffset.row) * (CELL_SIZE + CELL_PADDING);
           
           // Draw cell fill
           ctx.fillStyle = GRID_COLORS[data[r][c]];
@@ -155,7 +158,7 @@ const ContributionGrid = ({
         }
       }
     }
-  }, [activeTool, pastePreviewPos, CELL_SIZE, CELL_PADDING, GRID_COLORS, gridData]);
+  }, [activeTool, pastePreviewPos, CELL_SIZE, CELL_PADDING, GRID_COLORS, gridData, pasteOffset]);
 
   // Handle paste keyboard shortcut
   useEffect(() => {
@@ -181,18 +184,21 @@ const ContributionGrid = ({
       let hasValidPaste = false;
       
       for (let r = 0; r < height; r++) {
-        if (pastePreviewPos.row + r >= gridData.length) continue;
-        newGrid[pastePreviewPos.row + r] = [...gridData[pastePreviewPos.row + r]];
+        if (pastePreviewPos.row + r + pasteOffset.row >= gridData.length || 
+            pastePreviewPos.row + r + pasteOffset.row < 0) continue;
+            
+        newGrid[pastePreviewPos.row + r + pasteOffset.row] = [...gridData[pastePreviewPos.row + r + pasteOffset.row]];
         
         for (let c = 0; c < width; c++) {
-          if (pastePreviewPos.col + c >= gridData[0].length) continue;
+          if (pastePreviewPos.col + c + pasteOffset.col >= gridData[0].length || 
+              pastePreviewPos.col + c + pasteOffset.col < 0) continue;
           
           // Skip null cells in the copied data
           if (data[r][c] === null) continue;
           
           // Only paste on valid cells (not null)
-          if (gridData[pastePreviewPos.row + r][pastePreviewPos.col + c] !== null) {
-            newGrid[pastePreviewPos.row + r][pastePreviewPos.col + c] = data[r][c];
+          if (gridData[pastePreviewPos.row + r + pasteOffset.row][pastePreviewPos.col + c + pasteOffset.col] !== null) {
+            newGrid[pastePreviewPos.row + r + pasteOffset.row][pastePreviewPos.col + c + pasteOffset.col] = data[r][c];
             hasValidPaste = true;
           }
         }
@@ -286,7 +292,8 @@ const ContributionGrid = ({
     onMouseDown,
     id,
     clearSelection,
-    pastePreviewPos
+    pastePreviewPos,
+    pasteOffset
   ]);
 
   const handleMouseMove = useCallback((e) => {
@@ -446,6 +453,44 @@ const ContributionGrid = ({
       }
     }
   }, [activeTool]);
+
+  // Reset offset when changing tools
+  useEffect(() => {
+    if (activeTool !== TOOLS.PASTE) {
+      setPasteOffset({ row: 0, col: 0 });
+    }
+  }, [activeTool]);
+
+  // Handle arrow keys for paste offset
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (activeTool !== TOOLS.PASTE || !pastePreviewPos) return;
+
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          setPasteOffset(prev => ({ ...prev, row: prev.row - 1 }));
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          setPasteOffset(prev => ({ ...prev, row: prev.row + 1 }));
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          setPasteOffset(prev => ({ ...prev, col: prev.col - 1 }));
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          setPasteOffset(prev => ({ ...prev, col: prev.col + 1 }));
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTool, pastePreviewPos]);
 
   return (
     <div 
