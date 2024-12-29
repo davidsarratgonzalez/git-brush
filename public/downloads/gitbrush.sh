@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# git brush - A tool to create artistic commit patterns on GitHub
+# Made with ❤️ by David Sarrat González
+# Visit https://www.github.com/davidsarratgonzalez/git-brush for more information
+#
 
 # Default multiplier if not provided
 MULTIPLIER=${2:-200}
@@ -132,10 +137,10 @@ while IFS= read -r line; do
             echo "Commit $i on $date" > temp_file
             git add temp_file 2>/dev/null
             
-            # Set commit time to a random time during working hours (9AM-5PM)
-            hour=$((RANDOM % 8 + 9))
-            minute=$((RANDOM % 60))
-            second=$((RANDOM % 60))
+            # Set commit time to 10:00 UTC (safer global time)
+            hour=10  # This ensures the commit appears on the intended day for most timezones
+            minute=0
+            second=0
             commit_time=$(printf "%02d:%02d:%02d" $hour $minute $second)
             
             # Set both author and committer dates with UTC timezone
@@ -226,5 +231,4 @@ read -n 1 -s
 trap - WINCH EXIT INT TERM
 tput rmcup 2>/dev/null || true
 tput cnorm 2>/dev/null || true
-clear
 exit 0
