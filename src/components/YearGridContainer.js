@@ -1,6 +1,6 @@
 import React from 'react';
 import ContributionGrid from './ContributionGrid';
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { TOOLS, COLORS } from './PaintTools';
 import * as GridDrawing from '../utils/gridDrawing';
 
@@ -14,14 +14,9 @@ const GRID_COLORS = [
   '#216e39'  // 4: darker
 ];
 
-const YearGridContainer = ({ year, onRemove }) => {
+const YearGridContainer = ({ year, onRemove, gridData, setGridData }) => {
   const [activeTool, setActiveTool] = useState(TOOLS.PENCIL);
   const [intensity, setIntensity] = useState(1);
-  const [gridData, setGridData] = useState([]);
-
-  const handleSetGridData = useCallback((newData) => {
-    setGridData(newData);
-  }, []);
 
   const handleToolChange = (tool, newIntensity) => {
     if (tool) setActiveTool(tool);
@@ -116,7 +111,7 @@ const YearGridContainer = ({ year, onRemove }) => {
         activeTool={activeTool}
         intensity={intensity}
         gridData={gridData}
-        setGridData={handleSetGridData}
+        setGridData={setGridData}
       />
     </div>
   );

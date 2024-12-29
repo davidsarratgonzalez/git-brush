@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { TOOLS } from './PaintTools';
-import useGridLogic from '../hooks/useGridLogic';
 import getClosestCell from '../utils/getClosestCell';
 import * as GridDrawing from '../utils/gridDrawing';
 import * as CellDrawing from '../utils/cellDrawing';
@@ -10,10 +9,6 @@ const ContributionGrid = ({ id, year, activeTool, intensity, gridData, setGridDa
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
   const [selectionStart, setSelectionStart] = useState(null);
-
-  // Pull calendar info from our custom hook
-  const { calendarInfo, isValidDay } = useGridLogic(year);
-  const { firstDay, totalDays } = calendarInfo;
 
   const CELL_SIZE = 10;
   const CELL_PADDING = 2;
@@ -25,6 +20,12 @@ const ContributionGrid = ({ id, year, activeTool, intensity, gridData, setGridDa
     '#30a14e', // 3: dark
     '#216e39'  // 4: darker
   ], []);
+
+  // Add effect to draw initial grid
+  useEffect(() => {
+    const ctx = canvasRef.current.getContext('2d');
+    GridDrawing.drawEmptyGrid(ctx, gridData, CELL_SIZE, CELL_PADDING, GRID_COLORS);
+  }, [gridData, CELL_SIZE, CELL_PADDING, GRID_COLORS]);
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -198,38 +199,6 @@ const ContributionGrid = ({ id, year, activeTool, intensity, gridData, setGridDa
       window.removeEventListener('mouseup', handleGlobalMouseUp);
     };
   }, [handleMouseMove, handleMouseUp]);
-
-  // On mount, initialize grid
-  useEffect(() => {
-    // We'll compute totalWeeks etc. inside the initializeGridData call
-    // using isValidDay + firstDay + totalDays from the hook
-    const ctx = canvasRef.current.getContext('2d');
-
-    // We can do this calculation inline:
-    const totalWeeks = Math.ceil((totalDays + firstDay) / 7);
-    const newGrid = Array(7).fill(null).map(() => Array(totalWeeks).fill(null));
-
-    // Fill valid days
-    for (let c = 0; c < totalWeeks; c++) {
-      for (let r = 0; r < 7; r++) {
-        if (isValidDay(r, c)) {
-          newGrid[r][c] = 0;
-        }
-      }
-    }
-
-    setGridData(newGrid);
-    GridDrawing.drawEmptyGrid(ctx, newGrid, CELL_SIZE, CELL_PADDING, GRID_COLORS);
-  }, [
-    year,
-    firstDay,
-    totalDays,
-    isValidDay,
-    CELL_SIZE,
-    CELL_PADDING,
-    GRID_COLORS,
-    setGridData
-  ]);
 
   return (
     <div className="contribution-grid">

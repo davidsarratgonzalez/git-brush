@@ -19,6 +19,7 @@ export default function useYearList() {
 
   return {
     years,
+    setYears,
     newYear,
     setNewYear,
     addYear,
