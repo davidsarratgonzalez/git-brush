@@ -59,8 +59,4 @@ export function drawSelectionArea(
   drawHandle(startX + width + offsetX, startY + offsetY); // Top-right
   drawHandle(startX + offsetX, startY + height + offsetY); // Bottom-left
   drawHandle(startX + width + offsetX, startY + height + offsetY); // Bottom-right
-
-  return requestAnimationFrame(() => {
-    drawSelectionArea(ctx, start, end, cellSize, cellPadding, gridData);
-  });
 } 

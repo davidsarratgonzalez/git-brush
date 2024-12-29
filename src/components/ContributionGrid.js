@@ -113,15 +113,15 @@ const ContributionGrid = ({
         GRID_COLORS
       );
     } else if (activeTool === TOOLS.SELECT) {
-      const animationFrame = drawSelectionArea(
-        selectionCanvasRef.current.getContext('2d'),
+      const ctx = selectionCanvasRef.current.getContext('2d');
+      drawSelectionArea(
+        ctx,
         coords,
         coords,
         CELL_SIZE,
         CELL_PADDING,
         gridData
       );
-      setSelectionAnimationFrame(animationFrame);
     }
   }, [
     activeTool,
@@ -174,18 +174,15 @@ const ContributionGrid = ({
         GRID_COLORS
       );
     } else if (activeTool === TOOLS.SELECT && isDrawingRef.current) {
-      if (selectionAnimationFrame) {
-        cancelAnimationFrame(selectionAnimationFrame);
-      }
-      const animationFrame = drawSelectionArea(
-        selectionCanvasRef.current.getContext('2d'),
+      const ctx = selectionCanvasRef.current.getContext('2d');
+      drawSelectionArea(
+        ctx,
         selectionStart,
         coords,
         CELL_SIZE,
         CELL_PADDING,
         gridData
       );
-      setSelectionAnimationFrame(animationFrame);
     }
   }, [
     activeTool,
