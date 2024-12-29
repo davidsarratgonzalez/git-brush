@@ -4,7 +4,6 @@ import PaintTools, { TOOLS } from './PaintTools';
 const ContributionGrid = ({ year, onGridChange }) => {
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
-  const [isDrawing, setIsDrawing] = useState(false);
   const [intensity, setIntensity] = useState(1);
   const [gridData, setGridData] = useState([]);
   const [activeTool, setActiveTool] = useState(TOOLS.PENCIL);
@@ -39,32 +38,6 @@ const ContributionGrid = ({ year, onGridChange }) => {
     const dayNumber = col * 7 + row - firstDay;
     return dayNumber >= 0 && dayNumber < totalDays;
   }, [getFirstDayOfYear, getDaysInYear, year]);
-
-  const getGridCoordinates = useCallback((e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    const scale = canvasRef.current.width / rect.width;
-    const x = (e.clientX - rect.left) * scale;
-    const y = (e.clientY - rect.top) * scale;
-    
-    // Calculate initial position
-    let col = Math.floor(x / (CELL_SIZE + CELL_PADDING));
-    let row = Math.floor(y / (CELL_SIZE + CELL_PADDING));
-    
-    // Clamp values to grid boundaries
-    col = Math.max(0, Math.min(col, gridData[0].length - 1));
-    row = Math.max(0, Math.min(row, 6));  // 7 rows (0-6)
-    
-    // Only check for valid cell if we're not dragging
-    if (!isDrawing) {
-      const xInUnit = x - col * (CELL_SIZE + CELL_PADDING);
-      const yInUnit = y - row * (CELL_SIZE + CELL_PADDING);
-      if (xInUnit > CELL_SIZE || yInUnit > CELL_SIZE) {
-        return null;
-      }
-    }
-    
-    return { row, col };
-  }, [CELL_SIZE, CELL_PADDING, gridData, isDrawing]);
 
   const drawCell = useCallback((coords) => {
     if (!coords || !gridData[coords.row] || gridData[coords.row][coords.col] === null) return;
@@ -216,12 +189,57 @@ const ContributionGrid = ({ year, onGridChange }) => {
     }
   }, [gridData, intensity, CELL_SIZE, CELL_PADDING, GRID_COLORS, drawEmptyGrid]);
 
-  const handleMouseDown = useCallback((e) => {
-    const coords = getGridCoordinates(e);
-    if (!coords) return;
+  const getClosestCell = useCallback((x, y) => {
+    // Get the cell grid position
+    const baseCol = Math.floor(x / (CELL_SIZE + CELL_PADDING));
+    const baseRow = Math.floor(y / (CELL_SIZE + CELL_PADDING));
+    
+    // Get the exact position within the cell unit
+    const xInUnit = x - baseCol * (CELL_SIZE + CELL_PADDING);
+    const yInUnit = y - baseRow * (CELL_SIZE + CELL_PADDING);
+    
+    // Calculate distances to adjacent cells
+    let row = baseRow;
+    let col = baseCol;
+    
+    // If we're in padding area, find the closest cell
+    if (xInUnit > CELL_SIZE || yInUnit > CELL_SIZE) {
+      // Check horizontal distance
+      if (xInUnit > CELL_SIZE) {
+        const distToCurrentCell = xInUnit - CELL_SIZE;
+        const distToNextCell = (CELL_SIZE + CELL_PADDING) - xInUnit;
+        if (distToNextCell < distToCurrentCell) {
+          col = baseCol + 1;
+        }
+      }
+      
+      // Check vertical distance
+      if (yInUnit > CELL_SIZE) {
+        const distToCurrentCell = yInUnit - CELL_SIZE;
+        const distToNextCell = (CELL_SIZE + CELL_PADDING) - yInUnit;
+        if (distToNextCell < distToCurrentCell) {
+          row = baseRow + 1;
+        }
+      }
+    }
+    
+    // Clamp to grid boundaries
+    col = Math.max(0, Math.min(col, gridData[0].length - 1));
+    row = Math.max(0, Math.min(row, 6));
+    
+    return { row, col };
+  }, [CELL_SIZE, CELL_PADDING, gridData]);
 
-    setIsDrawing(true);
-    isDrawingRef.current = true;  // Update ref
+  const handleMouseDown = useCallback((e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const scale = canvasRef.current.width / rect.width;
+    const x = (e.clientX - rect.left) * scale;
+    const y = (e.clientY - rect.top) * scale;
+    
+    const coords = getClosestCell(x, y);
+    
+    // Start drawing regardless of position
+    isDrawingRef.current = true;
     setSelectionStart(coords);
     
     if (activeTool === TOOLS.PENCIL) {
@@ -231,66 +249,41 @@ const ContributionGrid = ({ year, onGridChange }) => {
     } else if (activeTool === TOOLS.RECTANGLE || activeTool === TOOLS.RECTANGLE_BORDER) {
       drawRectangle(coords, coords, activeTool === TOOLS.RECTANGLE_BORDER, false);
     }
-  }, [activeTool, getGridCoordinates, drawCell, fillArea, drawRectangle]);
+  }, [activeTool, drawCell, fillArea, drawRectangle, getClosestCell]);
 
   const handleMouseMove = useCallback((e) => {
     if (!isDrawingRef.current) return;
 
-    // Get coordinates and clamp them to grid even if mouse is outside
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = canvasRef.current.width / rect.width;
-    let x = (e.clientX - rect.left) * scale;
-    let y = (e.clientY - rect.top) * scale;
+    const x = (e.clientX - rect.left) * scale;
+    const y = (e.clientY - rect.top) * scale;
     
-    // Clamp x and y to grid boundaries
-    x = Math.max(0, Math.min(x, canvasRef.current.width));
-    y = Math.max(0, Math.min(y, canvasRef.current.height));
-    
-    let col = Math.floor(x / (CELL_SIZE + CELL_PADDING));
-    let row = Math.floor(y / (CELL_SIZE + CELL_PADDING));
-    
-    // Clamp grid positions
-    col = Math.max(0, Math.min(col, gridData[0].length - 1));
-    row = Math.max(0, Math.min(row, 6));
-
-    const coords = { row, col };
+    const coords = getClosestCell(x, y);
 
     if (activeTool === TOOLS.PENCIL) {
       drawCell(coords);
     } else if (activeTool === TOOLS.RECTANGLE || activeTool === TOOLS.RECTANGLE_BORDER) {
       drawRectangle(selectionStart, coords, activeTool === TOOLS.RECTANGLE_BORDER, false);
     }
-  }, [activeTool, CELL_SIZE, CELL_PADDING, gridData, drawCell, drawRectangle, selectionStart]);
+  }, [activeTool, drawCell, drawRectangle, selectionStart, getClosestCell]);
 
   const handleMouseUp = useCallback((e) => {
     if (isDrawingRef.current && selectionStart) {
-      // Get coordinates and clamp them to grid even if mouse is outside
       const rect = canvasRef.current.getBoundingClientRect();
       const scale = canvasRef.current.width / rect.width;
-      let x = (e.clientX - rect.left) * scale;
-      let y = (e.clientY - rect.top) * scale;
+      const x = (e.clientX - rect.left) * scale;
+      const y = (e.clientY - rect.top) * scale;
       
-      // Clamp x and y to grid boundaries
-      x = Math.max(0, Math.min(x, canvasRef.current.width));
-      y = Math.max(0, Math.min(y, canvasRef.current.height));
-      
-      let col = Math.floor(x / (CELL_SIZE + CELL_PADDING));
-      let row = Math.floor(y / (CELL_SIZE + CELL_PADDING));
-      
-      // Clamp grid positions
-      col = Math.max(0, Math.min(col, gridData[0].length - 1));
-      row = Math.max(0, Math.min(row, 6));
-
-      const coords = { row, col };
+      const coords = getClosestCell(x, y);
 
       if (activeTool === TOOLS.RECTANGLE || activeTool === TOOLS.RECTANGLE_BORDER) {
         drawRectangle(selectionStart, coords, activeTool === TOOLS.RECTANGLE_BORDER, true);
       }
     }
-    setIsDrawing(false);
     isDrawingRef.current = false;
     setSelectionStart(null);
-  }, [activeTool, CELL_SIZE, CELL_PADDING, gridData, drawRectangle, selectionStart]);
+  }, [activeTool, drawRectangle, selectionStart, getClosestCell]);
 
   // Global mouse event handlers
   useEffect(() => {
@@ -325,7 +318,13 @@ const ContributionGrid = ({ year, onGridChange }) => {
   }, [initializeGridData, drawEmptyGrid]);
 
   return (
-    <div className="contribution-grid">
+    <div className="contribution-grid"
+      onMouseDown={(e) => {
+        // Prevent text selection while drawing
+        e.preventDefault();
+        handleMouseDown(e);
+      }}
+    >
       <PaintTools
         activeTool={activeTool}
         onToolChange={handleToolChange}
@@ -336,7 +335,6 @@ const ContributionGrid = ({ year, onGridChange }) => {
         ref={canvasRef}
         width={53 * (CELL_SIZE + CELL_PADDING)}
         height={7 * (CELL_SIZE + CELL_PADDING)}
-        onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         style={{ width: '100%' }}
