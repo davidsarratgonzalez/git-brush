@@ -40,7 +40,8 @@ class SelectionManager {
     for (let r = startRow; r <= endRow; r++) {
       const row = [];
       for (let c = startCol; c <= endCol; c++) {
-        row.push(gridData[r][c]);
+        // Only copy non-null cells (including empty/gray ones)
+        row.push(gridData[r][c] !== null ? gridData[r][c] : null);
       }
       copiedArea.push(row);
     }

@@ -190,7 +190,7 @@ const YearGridContainer = ({
                 <i className="fas fa-cut"></i>
               </button>
               <button 
-                className="tool-button"
+                className={`tool-button ${activeTool === TOOLS.PASTE ? 'active' : ''}`}
                 onClick={() => handleToolChange(TOOLS.PASTE)}
                 disabled={!selectionManager.hasCopiedData()}
                 title="Paste (Ctrl+V)"

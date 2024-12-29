@@ -125,14 +125,16 @@ const ContributionGrid = ({
         for (let c = 0; c < width; c++) {
           if (pastePreviewPos.col + c >= gridData[0].length) continue;
           
+          // Skip null cells in the copied data
+          if (data[r][c] === null) continue;
+          
           // Only show preview on valid cells (not null)
           if (gridData[pastePreviewPos.row + r][pastePreviewPos.col + c] === null) continue;
           
           const x = (pastePreviewPos.col + c) * (CELL_SIZE + CELL_PADDING);
           const y = (pastePreviewPos.row + r) * (CELL_SIZE + CELL_PADDING);
           
-          // Semi-transparent preview
-          ctx.globalAlpha = 0.5;
+          // Draw cell fill
           ctx.fillStyle = GRID_COLORS[data[r][c]];
           ctx.fillRect(
             x + SELECTION_PADDING, 
@@ -140,7 +142,16 @@ const ContributionGrid = ({
             CELL_SIZE, 
             CELL_SIZE
           );
-          ctx.globalAlpha = 1;
+          
+          // Draw preview border
+          ctx.strokeStyle = '#1a73e8';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(
+            x + SELECTION_PADDING, 
+            y + SELECTION_PADDING, 
+            CELL_SIZE, 
+            CELL_SIZE
+          );
         }
       }
     }
@@ -161,6 +172,39 @@ const ContributionGrid = ({
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
+    
+    if (activeTool === TOOLS.PASTE && selectionManager.hasCopiedData() && pastePreviewPos) {
+      const { data, width, height } = selectionManager.copiedData;
+      const newGrid = [...gridData];
+      
+      // Apply paste
+      let hasValidPaste = false;
+      
+      for (let r = 0; r < height; r++) {
+        if (pastePreviewPos.row + r >= gridData.length) continue;
+        newGrid[pastePreviewPos.row + r] = [...gridData[pastePreviewPos.row + r]];
+        
+        for (let c = 0; c < width; c++) {
+          if (pastePreviewPos.col + c >= gridData[0].length) continue;
+          
+          // Skip null cells in the copied data
+          if (data[r][c] === null) continue;
+          
+          // Only paste on valid cells (not null)
+          if (gridData[pastePreviewPos.row + r][pastePreviewPos.col + c] !== null) {
+            newGrid[pastePreviewPos.row + r][pastePreviewPos.col + c] = data[r][c];
+            hasValidPaste = true;
+          }
+        }
+      }
+      
+      // Only update if we actually pasted something
+      if (hasValidPaste) {
+        setGridData(newGrid);
+      }
+      return;
+    }
+
     isDrawingRef.current = true;
     onMouseDown?.();
 
@@ -230,38 +274,6 @@ const ContributionGrid = ({
         startCoords: coords,
         endCoords: coords
       });
-    } else if (activeTool === TOOLS.PASTE && selectionManager.hasCopiedData() && pastePreviewPos) {
-      e.preventDefault();
-      const { data, width, height } = selectionManager.copiedData;
-      const newGrid = [...gridData];
-      
-      // Apply paste
-      let hasValidPaste = false; // Track if we actually pasted anything
-      
-      for (let r = 0; r < height; r++) {
-        if (pastePreviewPos.row + r >= gridData.length) continue;
-        newGrid[pastePreviewPos.row + r] = [...gridData[pastePreviewPos.row + r]];
-        
-        for (let c = 0; c < width; c++) {
-          if (pastePreviewPos.col + c >= gridData[0].length) continue;
-          
-          // Only paste on valid cells (not null)
-          if (gridData[pastePreviewPos.row + r][pastePreviewPos.col + c] !== null) {
-            newGrid[pastePreviewPos.row + r][pastePreviewPos.col + c] = data[r][c];
-            hasValidPaste = true;
-          }
-        }
-      }
-      
-      // Only update if we actually pasted something
-      if (hasValidPaste) {
-        setGridData(newGrid);
-      }
-      
-      // Clear preview
-      const ctx = selectionCanvasRef.current.getContext('2d');
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      setPastePreviewPos(null);
     }
   }, [
     activeTool,
@@ -278,14 +290,20 @@ const ContributionGrid = ({
   ]);
 
   const handleMouseMove = useCallback((e) => {
-    if (!isDrawingRef.current) return;
-
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = canvasRef.current.width / rect.width;
     const x = (e.clientX - rect.left) * scale;
     const y = (e.clientY - rect.top) * scale;
 
     const coords = getClosestCell(x, y, gridData, CELL_SIZE, CELL_PADDING, activeTool === TOOLS.SELECT);
+
+    // Show paste preview on hover when paste tool is active
+    if (activeTool === TOOLS.PASTE && selectionManager.hasCopiedData()) {
+      setPastePreviewPos(coords);
+      return; // Exit early for paste preview
+    }
+
+    if (!isDrawingRef.current) return;
 
     if (activeTool === TOOLS.PENCIL) {
       CellDrawing.drawCell(
@@ -330,8 +348,6 @@ const ContributionGrid = ({
       if (selectionManager.currentSelection?.gridId === id) {
         selectionManager.currentSelection.endCoords = coords;
       }
-    } else if (activeTool === TOOLS.PASTE && selectionManager.hasCopiedData()) {
-      setPastePreviewPos(coords);
     }
   }, [
     activeTool,
@@ -420,6 +436,17 @@ const ContributionGrid = ({
     }
   }, [activeTool]);
 
+  // Add mouseLeave handler to clear paste preview
+  const handleMouseLeave = useCallback(() => {
+    if (activeTool === TOOLS.PASTE) {
+      setPastePreviewPos(null);
+      if (selectionCanvasRef.current) {
+        const ctx = selectionCanvasRef.current.getContext('2d');
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      }
+    }
+  }, [activeTool]);
+
   return (
     <div 
       className="contribution-grid" 
@@ -435,10 +462,12 @@ const ContributionGrid = ({
         width={53 * (CELL_SIZE + CELL_PADDING)}
         height={7 * (CELL_SIZE + CELL_PADDING)}
         onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
         style={{ 
           width: '100%',
-          display: 'block' // Prevent any extra space
+          display: 'block'
         }}
       />
       <canvas
