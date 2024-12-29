@@ -45,7 +45,6 @@ trap 'cleanup_and_exit' EXIT INT TERM
 cleanup_and_exit() {
     tput rmcup 2>/dev/null || true
     tput cnorm 2>/dev/null || true
-    rm -f temp_file 2>/dev/null
     exit 0
 }
 
@@ -134,9 +133,6 @@ while IFS= read -r line; do
         # Make the actual commits
         commit_count=$((intensity * MULTIPLIER))
         for ((i=1; i<=commit_count; i++)); do
-            echo "Commit $i on $date" > temp_file
-            git add temp_file 2>/dev/null
-            
             # Set commit time to 10:00 UTC (safer global time)
             hour=10  # This ensures the commit appears on the intended day for most timezones
             minute=0
@@ -148,7 +144,7 @@ while IFS= read -r line; do
             export GIT_AUTHOR_DATE="$commit_date"
             export GIT_COMMITTER_DATE="$commit_date"
             
-            git commit -m "$date:$i 🎨" >/dev/null 2>&1
+            git commit --allow-empty -m "$date: $i 🎨" >/dev/null 2>&1
             commits_done=$((commits_done + 1))
             
             # Update year commits count
@@ -201,7 +197,6 @@ while IFS= read -r line; do
                 fi
             fi
         done
-        rm -f temp_file 2>/dev/null
     fi
 done < "$JSON_FILE"
 
