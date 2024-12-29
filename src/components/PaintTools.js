@@ -1,14 +1,30 @@
+/**
+ * Constants and components for paint tool functionality
+ */
+
 import React from 'react';
 
+/**
+ * Available drawing tools
+ * @constant {Object}
+ */
 export const TOOLS = {
   PENCIL: 'PENCIL',
-  FILL: 'FILL',
+  FILL: 'FILL', 
   RECTANGLE: 'RECTANGLE',
   RECTANGLE_BORDER: 'RECTANGLE_BORDER',
   SELECT: 'SELECT',
   PASTE: 'PASTE'
 };
 
+/**
+ * Color palette options with hover states
+ * @constant {Array<Object>}
+ * @property {number} id - Unique identifier for the color
+ * @property {string} name - Display name of the color
+ * @property {string} color - Hex code for the color
+ * @property {string} hoverColor - Hex code for hover state
+ */
 const COLORS = [
   { id: 0, name: 'None', color: '#ebedf0', hoverColor: '#dfe1e4' },
   { id: 1, name: 'Light', color: '#9be9a8', hoverColor: '#8cd89c' },
@@ -17,6 +33,15 @@ const COLORS = [
   { id: 4, name: 'Darker', color: '#216e39', hoverColor: '#1d6333' }
 ];
 
+/**
+ * Paint tools component providing drawing tool selection and color palette
+ * @component
+ * @param {Object} props
+ * @param {string} props.activeTool - Currently selected drawing tool
+ * @param {Function} props.onToolChange - Callback when tool selection changes
+ * @param {number} props.intensity - Selected color intensity level (0-4)
+ * @param {Function} props.onIntensityChange - Callback when color intensity changes
+ */
 const PaintTools = ({ activeTool, onToolChange, intensity, onIntensityChange }) => {
   return (
     <div className="paint-tools">
@@ -71,4 +96,4 @@ const PaintTools = ({ activeTool, onToolChange, intensity, onIntensityChange }) 
 };
 
 export default PaintTools;
-export { COLORS }; 
+export { COLORS };

@@ -1,3 +1,4 @@
+// Import required React hooks and utility functions
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { TOOLS } from './PaintTools';
 import getClosestCell from '../utils/getClosestCell';
@@ -7,6 +8,7 @@ import * as RectangleDrawing from '../utils/rectangleDrawing';
 import { drawSelectionArea } from '../utils/selectionDrawing';
 import { selectionManager } from '../utils/selectionManager';
 
+// Component for rendering an interactive contribution grid
 const ContributionGrid = ({ 
   id, 
   year, 
@@ -18,17 +20,20 @@ const ContributionGrid = ({
   onMouseUp,
   onToolChange
 }) => {
+  // Canvas and drawing state refs
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
   const [selectionStart, setSelectionStart] = useState(null);
   const [selectionAnimationFrame, setSelectionAnimationFrame] = useState(null);
-  const selectionCanvasRef = useRef(null); // Separate canvas for selection overlay
+  const selectionCanvasRef = useRef(null); // Overlay canvas for selection
   const [pastePreviewPos, setPastePreviewPos] = useState(null);
   const [pasteOffset, setPasteOffset] = useState({ row: 0, col: 0 });
 
+  // Grid rendering constants
   const CELL_SIZE = 10;
   const CELL_PADDING = 2;
 
+  // Color palette for contribution levels
   const GRID_COLORS = useMemo(() => [
     '#ebedf0', // 0: empty/none
     '#9be9a8', // 1: light
@@ -37,17 +42,17 @@ const ContributionGrid = ({
     '#216e39'  // 4: darker
   ], []);
 
-  // Add constants for selection border
+  // Selection styling constants
   const SELECTION_BORDER_WIDTH = 2;
-  const SELECTION_PADDING = 4; // Extra space for the border
+  const SELECTION_PADDING = 4;
 
-  // Add effect to draw initial grid
+  // Initialize empty grid
   useEffect(() => {
     const ctx = canvasRef.current.getContext('2d');
     GridDrawing.drawEmptyGrid(ctx, gridData, CELL_SIZE, CELL_PADDING, GRID_COLORS);
   }, [gridData, CELL_SIZE, CELL_PADDING, GRID_COLORS]);
 
-  // Clear selection on click outside
+  // Handle clicks outside selection area
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!selectionCanvasRef.current?.contains(e.target)) {
@@ -63,7 +68,7 @@ const ContributionGrid = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [selectionAnimationFrame]);
 
-  // Function to clear selection
+  // Clear selection helper function
   const clearSelection = useCallback(() => {
     if (selectionCanvasRef.current) {
       const ctx = selectionCanvasRef.current.getContext('2d');
@@ -72,7 +77,7 @@ const ContributionGrid = ({
     }
   }, []);
 
-  // Clear selection when tool changes
+  // Clear selection when changing tools
   useEffect(() => {
     if (activeTool !== TOOLS.SELECT) {
       clearSelection();
@@ -80,7 +85,7 @@ const ContributionGrid = ({
     }
   }, [activeTool, clearSelection]);
 
-  // Handle selection changes from other grids
+  // Sync selection state across grids
   useEffect(() => {
     const unsubscribe = selectionManager.subscribe((selection) => {
       if (!selection || selection.gridId !== id) {
@@ -95,7 +100,6 @@ const ContributionGrid = ({
     const handleKeyDown = (e) => {
       if (!selectionManager.hasSelection()) return;
       
-      // Only handle if this grid has the current selection
       if (selectionManager.currentSelection.gridId !== id) return;
 
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
@@ -111,7 +115,7 @@ const ContributionGrid = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [id, gridData, setGridData]);
 
-  // Add paste preview effect
+  // Render paste preview
   useEffect(() => {
     if (activeTool === TOOLS.PASTE && selectionManager.hasCopiedData() && pastePreviewPos) {
       const ctx = selectionCanvasRef.current.getContext('2d');
@@ -119,7 +123,7 @@ const ContributionGrid = ({
       
       const { data, width, height } = selectionManager.copiedData;
       
-      // Draw preview
+      // Draw preview cells
       for (let r = 0; r < height; r++) {
         if (pastePreviewPos.row + r + pasteOffset.row >= gridData.length || 
             pastePreviewPos.row + r + pasteOffset.row < 0) continue;
@@ -128,16 +132,14 @@ const ContributionGrid = ({
           if (pastePreviewPos.col + c + pasteOffset.col >= gridData[0].length || 
               pastePreviewPos.col + c + pasteOffset.col < 0) continue;
           
-          // Skip null cells in the copied data
           if (data[r][c] === null) continue;
           
-          // Only show preview on valid cells (not null)
           if (gridData[pastePreviewPos.row + r + pasteOffset.row][pastePreviewPos.col + c + pasteOffset.col] === null) continue;
           
           const x = (pastePreviewPos.col + c + pasteOffset.col) * (CELL_SIZE + CELL_PADDING);
           const y = (pastePreviewPos.row + r + pasteOffset.row) * (CELL_SIZE + CELL_PADDING);
           
-          // Draw cell fill
+          // Cell fill
           ctx.fillStyle = GRID_COLORS[data[r][c]];
           ctx.fillRect(
             x + SELECTION_PADDING, 
@@ -146,7 +148,7 @@ const ContributionGrid = ({
             CELL_SIZE
           );
           
-          // Draw preview border
+          // Preview border
           ctx.strokeStyle = '#1a73e8';
           ctx.lineWidth = 1;
           ctx.strokeRect(
@@ -173,6 +175,7 @@ const ContributionGrid = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Handle mouse down events
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
     
@@ -180,9 +183,9 @@ const ContributionGrid = ({
       const { data, width, height } = selectionManager.copiedData;
       const newGrid = [...gridData];
       
-      // Apply paste
       let hasValidPaste = false;
       
+      // Apply paste data to grid
       for (let r = 0; r < height; r++) {
         if (pastePreviewPos.row + r + pasteOffset.row >= gridData.length || 
             pastePreviewPos.row + r + pasteOffset.row < 0) continue;
@@ -193,10 +196,8 @@ const ContributionGrid = ({
           if (pastePreviewPos.col + c + pasteOffset.col >= gridData[0].length || 
               pastePreviewPos.col + c + pasteOffset.col < 0) continue;
           
-          // Skip null cells in the copied data
           if (data[r][c] === null) continue;
           
-          // Only paste on valid cells (not null)
           if (gridData[pastePreviewPos.row + r + pasteOffset.row][pastePreviewPos.col + c + pasteOffset.col] !== null) {
             newGrid[pastePreviewPos.row + r + pasteOffset.row][pastePreviewPos.col + c + pasteOffset.col] = data[r][c];
             hasValidPaste = true;
@@ -204,7 +205,6 @@ const ContributionGrid = ({
         }
       }
       
-      // Only update if we actually pasted something
       if (hasValidPaste) {
         setGridData(newGrid);
       }
@@ -222,7 +222,7 @@ const ContributionGrid = ({
     const coords = getClosestCell(x, y, gridData, CELL_SIZE, CELL_PADDING, activeTool === TOOLS.SELECT);
     setSelectionStart(coords);
 
-    // Initial draw operation
+    // Handle initial draw based on active tool
     if (activeTool === TOOLS.PENCIL) {
       CellDrawing.drawCell(
         coords, 
@@ -273,7 +273,6 @@ const ContributionGrid = ({
         gridData
       );
       
-      // Register this selection with the manager
       selectionManager.setSelection({
         gridId: id,
         clearFn: clearSelection,
@@ -296,6 +295,7 @@ const ContributionGrid = ({
     pasteOffset
   ]);
 
+  // Handle mouse move events
   const handleMouseMove = useCallback((e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = canvasRef.current.width / rect.width;
@@ -304,14 +304,14 @@ const ContributionGrid = ({
 
     const coords = getClosestCell(x, y, gridData, CELL_SIZE, CELL_PADDING, activeTool === TOOLS.SELECT);
 
-    // Show paste preview on hover when paste tool is active
     if (activeTool === TOOLS.PASTE && selectionManager.hasCopiedData()) {
       setPastePreviewPos(coords);
-      return; // Exit early for paste preview
+      return;
     }
 
     if (!isDrawingRef.current) return;
 
+    // Handle drawing based on active tool
     if (activeTool === TOOLS.PENCIL) {
       CellDrawing.drawCell(
         coords,
@@ -351,7 +351,6 @@ const ContributionGrid = ({
         gridData
       );
       
-      // Update selection end coordinates
       if (selectionManager.currentSelection?.gridId === id) {
         selectionManager.currentSelection.endCoords = coords;
       }
@@ -369,6 +368,7 @@ const ContributionGrid = ({
     pastePreviewPos
   ]);
 
+  // Handle mouse up events
   const handleMouseUp = useCallback((e) => {
     if (isDrawingRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
@@ -398,7 +398,7 @@ const ContributionGrid = ({
       }
       isDrawingRef.current = false;
       setSelectionStart(null);
-      onMouseUp?.(); // Notify parent
+      onMouseUp?.();
     }
   }, [
     activeTool,
@@ -412,7 +412,7 @@ const ContributionGrid = ({
     onMouseUp
   ]);
 
-  // Global mouse events
+  // Handle global mouse events
   useEffect(() => {
     const handleGlobalMouseMove = (e) => {
       if (isDrawingRef.current) {
@@ -432,7 +432,7 @@ const ContributionGrid = ({
     };
   }, [handleMouseMove, handleMouseUp]);
 
-  // Clear paste preview when changing tools
+  // Clear paste preview on tool change
   useEffect(() => {
     if (activeTool !== TOOLS.PASTE) {
       setPastePreviewPos(null);
@@ -443,7 +443,7 @@ const ContributionGrid = ({
     }
   }, [activeTool]);
 
-  // Add mouseLeave handler to clear paste preview
+  // Handle mouse leave events
   const handleMouseLeave = useCallback(() => {
     if (activeTool === TOOLS.PASTE) {
       setPastePreviewPos(null);
@@ -454,14 +454,14 @@ const ContributionGrid = ({
     }
   }, [activeTool]);
 
-  // Reset offset when changing tools
+  // Reset paste offset on tool change
   useEffect(() => {
     if (activeTool !== TOOLS.PASTE) {
       setPasteOffset({ row: 0, col: 0 });
     }
   }, [activeTool]);
 
-  // Handle arrow keys for paste offset
+  // Handle arrow key navigation for paste
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (activeTool !== TOOLS.PASTE || !pastePreviewPos) return;
@@ -526,11 +526,11 @@ const ContributionGrid = ({
           pointerEvents: 'none',
           width: `calc(100% + ${SELECTION_PADDING * 2}px)`,
           height: `calc(100% + ${SELECTION_PADDING * 2}px)`,
-          display: 'block' // Prevent any extra space
+          display: 'block'
         }}
       />
     </div>
   );
 };
 
-export default ContributionGrid; 
+export default ContributionGrid;

@@ -1,13 +1,30 @@
+/**
+ * Manages selection state and operations for grid cells
+ * Handles copying, cutting, and tracking of selected regions
+ */
 class SelectionManager {
+  /**
+   * Creates a new SelectionManager instance
+   */
   constructor() {
+    /** Currently active selection */
     this.currentSelection = null;
+
+    /** Callback for selection changes */
     this.onSelectionChange = null;
+
+    /** Currently copied grid data */
     this.copiedData = null;
+
+    /** Callback for copied data changes */
     this.onCopiedDataChange = null;
   }
 
+  /**
+   * Updates the current selection
+   * @param {Object} selection - New selection object containing coordinates and clear function
+   */
   setSelection(selection) {
-    // Clear previous selection if it exists and is different
     if (this.currentSelection && 
         this.currentSelection.gridId !== selection?.gridId) {
       this.currentSelection.clearFn();
@@ -20,6 +37,9 @@ class SelectionManager {
     }
   }
 
+  /**
+   * Clears the current selection
+   */
   clearSelection() {
     if (this.currentSelection) {
       this.currentSelection.clearFn();
@@ -31,17 +51,19 @@ class SelectionManager {
     }
   }
 
+  /**
+   * Copies the currently selected grid cells
+   * @param {Array<Array<number|null>>} gridData - 2D array of grid cell data
+   */
   copySelection(gridData) {
     if (!this.currentSelection) return;
     
     const { startRow, startCol, endRow, endCol } = this.getSelectionBounds();
     
-    // Create a copy of the selected area
     const copiedArea = [];
     for (let r = startRow; r <= endRow; r++) {
       const row = [];
       for (let c = startCol; c <= endCol; c++) {
-        // Only copy non-null cells (including empty/gray ones)
         const cell = gridData[r][c];
         row.push(cell !== null ? cell : null);
       }
@@ -54,19 +76,21 @@ class SelectionManager {
       height: endRow - startRow + 1
     };
 
-    // Notify listeners that copied data changed
     if (this.onCopiedDataChange) {
       this.onCopiedDataChange(true);
     }
   }
 
+  /**
+   * Cuts (copies and clears) the currently selected grid cells
+   * @param {Array<Array<number|null>>} gridData - 2D array of grid cell data
+   * @param {Function} setGridData - Function to update grid data
+   */
   cutSelection(gridData, setGridData) {
     if (!this.currentSelection) return;
     
-    // Copy first (reuse the copy functionality)
     this.copySelection(gridData);
     
-    // Then clear the selected area
     const { startRow, startCol, endRow, endCol } = this.getSelectionBounds();
     const newGrid = [...gridData];
     
@@ -74,7 +98,7 @@ class SelectionManager {
       newGrid[r] = [...gridData[r]];
       for (let c = startCol; c <= endCol; c++) {
         if (newGrid[r][c] !== null) {
-          newGrid[r][c] = 0; // Set to empty (0) only if it's not a null cell
+          newGrid[r][c] = 0;
         }
       }
     }
@@ -82,6 +106,10 @@ class SelectionManager {
     setGridData(newGrid);
   }
 
+  /**
+   * Gets the bounding coordinates of the current selection
+   * @returns {Object} Object containing start/end row/column indices
+   */
   getSelectionBounds() {
     const start = this.currentSelection.startCoords;
     const end = this.currentSelection.endCoords;
@@ -94,14 +122,27 @@ class SelectionManager {
     };
   }
 
+  /**
+   * Checks if there is copied data available
+   * @returns {boolean} True if copied data exists
+   */
   hasCopiedData() {
     return this.copiedData !== null;
   }
 
+  /**
+   * Checks if there is an active selection
+   * @returns {boolean} True if selection exists
+   */
   hasSelection() {
     return this.currentSelection !== null;
   }
 
+  /**
+   * Subscribes to selection changes
+   * @param {Function} callback - Function to call on selection changes
+   * @returns {Function} Cleanup function to unsubscribe
+   */
   subscribe(callback) {
     this.onSelectionChange = callback;
     return () => {
@@ -109,6 +150,9 @@ class SelectionManager {
     };
   }
 
+  /**
+   * Clears the currently copied data
+   */
   clearCopiedData() {
     this.copiedData = null;
     if (this.onCopiedDataChange) {
@@ -116,6 +160,11 @@ class SelectionManager {
     }
   }
 
+  /**
+   * Subscribes to copied data changes
+   * @param {Function} callback - Function to call when copied data changes
+   * @returns {Function} Cleanup function to unsubscribe
+   */
   subscribeToCopiedData(callback) {
     this.onCopiedDataChange = callback;
     return () => {
@@ -125,4 +174,4 @@ class SelectionManager {
 }
 
 // Create singleton instance
-export const selectionManager = new SelectionManager(); 
+export const selectionManager = new SelectionManager();

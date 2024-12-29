@@ -1,3 +1,8 @@
+/**
+ * Main application component that manages the git contribution graph editor
+ * Handles year management, grid data, tool selection, keyboard shortcuts,
+ * and import/export functionality
+ */
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import YearGridContainer from './components/YearGridContainer';
@@ -9,7 +14,12 @@ import { useLocalStorage } from './hooks/useLocalStorage';
 import { TOOLS } from './components/PaintTools';
 import { selectionManager } from './utils/selectionManager';
 
+/**
+ * Main App component that orchestrates the git contribution graph editor
+ * @returns {JSX.Element} The rendered App component
+ */
 function App() {
+  // Year management hooks and state
   const {
     years,
     setYears,
@@ -19,17 +29,22 @@ function App() {
     removeYear: removeYearBase
   } = useYearList();
 
+  // Grid data and tool state
   const [gridsData, setGridsData] = useLocalStorage();
   const [activeTool, setActiveTool] = useState(TOOLS.PENCIL);
   const [intensity, setIntensity] = useState(1);
   const [hasCopiedData, setHasCopiedData] = useState(false);
 
+  // Initialize years from stored grid data
   React.useEffect(() => {
     if (Object.keys(gridsData).length > 0) {
       setYears(Object.keys(gridsData).map(Number).sort((a, b) => b - a));
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /**
+   * Adds a new year grid to the editor
+   */
   const addYear = () => {
     if (!years.includes(newYear)) {
       addYearBase();
@@ -41,6 +56,10 @@ function App() {
     }
   };
 
+  /**
+   * Removes a year grid from the editor
+   * @param {number} yearToRemove - Year to remove
+   */
   const removeYear = (yearToRemove) => {
     removeYearBase(yearToRemove);
     setGridsData(prev => {
@@ -50,41 +69,45 @@ function App() {
     });
   };
 
+  /**
+   * Handles importing grid data
+   * @param {Object} importedGrids - Grid data to import
+   */
   const handleImport = (importedGrids) => {
     setGridsData(importedGrids);
     setYears(Object.keys(importedGrids).map(Number).sort((a, b) => b - a));
   };
 
-  // Define handleToolChange first
+  /**
+   * Updates the active tool and intensity
+   * @param {string} tool - Tool to activate
+   * @param {number} newIntensity - New intensity value
+   */
   const handleToolChange = React.useCallback((tool, newIntensity) => {
     if (tool) setActiveTool(tool);
     if (newIntensity !== undefined) {
       setIntensity(newIntensity);
     }
-  }, [setActiveTool, setIntensity]); // Add proper dependencies
+  }, [setActiveTool, setIntensity]);
 
-  // Then use it in useEffect
+  // Keyboard shortcuts for tools and intensity
   React.useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ignore if user is typing in an input
       if (e.target.tagName === 'INPUT') return;
 
       const key = e.key.toLowerCase();
       
-      // Prevent browser actions for Ctrl+Z and Ctrl+Y
       if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'y')) {
         e.preventDefault();
         return;
       }
 
-      // Handle number shortcuts for colors
       if (/^[1-5]$/.test(key)) {
         e.preventDefault();
         const intensity = parseInt(key) - 1;
         handleToolChange(null, intensity);
       }
 
-      // Handle tool shortcuts
       switch(key) {
         case 'q':
           handleToolChange(TOOLS.PENCIL);
@@ -110,24 +133,19 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleToolChange]);
 
-  // Add export shortcut
+  // Export keyboard shortcut
   React.useEffect(() => {
     const handleKeyDown = (e) => {
-      // Handle save shortcut
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        // Prompt for filename, empty default
         let filename = prompt('Enter a name for your file:');
         
-        // If user cancels
         if (filename === null) return;
         
-        // If empty, use default name
         if (!filename.trim()) {
           filename = 'gitbrush';
         }
         
-        // Add .json extension if not present
         if (!filename.toLowerCase().endsWith('.json')) {
           filename += '.json';
         }
@@ -136,7 +154,6 @@ function App() {
         const dataStr = JSON.stringify(exportData, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
 
-        // Create download link
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement('a');
         link.href = url;
@@ -150,10 +167,9 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [years, gridsData]);
 
-  // Subscribe to copied data changes at App level
+  // Selection manager subscription
   useEffect(() => {
     const unsubscribe = selectionManager.subscribeToCopiedData(setHasCopiedData);
-    // Initialize state
     setHasCopiedData(selectionManager.hasCopiedData());
     return unsubscribe;
   }, []);

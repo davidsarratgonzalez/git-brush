@@ -1,3 +1,9 @@
+/**
+ * @module YearGridContainer
+ * A container component for managing a year's contribution grid and associated controls.
+ * Handles drawing tools, history management, keyboard shortcuts, and grid interactions.
+ */
+
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import ContributionGrid from './ContributionGrid';
 import { TOOLS, COLORS } from './PaintTools';
@@ -5,8 +11,13 @@ import * as GridDrawing from '../utils/gridDrawing';
 import { useHistory } from '../hooks/useHistory';
 import { selectionManager } from '../utils/selectionManager';
 
+/** @constant {number} Cell size in pixels */
 const CELL_SIZE = 10;
+
+/** @constant {number} Padding between cells in pixels */
 const CELL_PADDING = 2;
+
+/** @constant {string[]} Colors for different contribution levels */
 const GRID_COLORS = [
   '#ebedf0', // 0: empty/none
   '#9be9a8', // 1: light
@@ -15,6 +26,18 @@ const GRID_COLORS = [
   '#216e39'  // 4: darker
 ];
 
+/**
+ * @component
+ * @param {Object} props
+ * @param {number} props.year - Year being displayed
+ * @param {Function} props.onRemove - Callback to remove this year's grid
+ * @param {Array<Array<number>>} props.gridData - 2D array of grid cell values
+ * @param {Function} props.setGridData - Callback to update grid data
+ * @param {string} props.activeTool - Currently selected drawing tool
+ * @param {number} props.intensity - Selected color intensity level (0-4)
+ * @param {Function} props.onToolChange - Callback when tool selection changes
+ * @param {boolean} props.hasCopiedData - Whether there is data in the clipboard
+ */
 const YearGridContainer = ({ 
   year, 
   onRemove, 
@@ -32,33 +55,45 @@ const YearGridContainer = ({
   const containerRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Function to set grid data *without* pushing to history
+  /**
+   * Updates grid data without pushing to history
+   * @param {Array<Array<number>>} newData - New grid data
+   */
   const updateGrid = (newData) => {
     setGridData(newData);
   };
 
-  // Push final result to history
+  /**
+   * Completes an action by pushing final state to history
+   * @param {Array<Array<number>>} finalData - Final grid state
+   */
   const completeAction = (finalData) => {
     history.push(JSON.parse(JSON.stringify(finalData)));
     setGridData(finalData);
   };
 
+  /**
+   * Handles mouse down event by starting drawing state
+   */
   const handleMouseDown = () => {
     isDrawingRef.current = true;
-    // Save a snapshot of the grid at mouse down,
-    // so we know exactly the state before the stroke
     startOfActionRef.current = JSON.parse(JSON.stringify(gridData));
   };
 
+  /**
+   * Handles mouse up event by completing drawing state
+   */
   const handleMouseUp = () => {
     if (isDrawingRef.current) {
       isDrawingRef.current = false;
-      // Only push once the stroke is done
       completeAction(gridData);
     }
   };
 
-  // Only “updateGrid” if still drawing; otherwise push immediately
+  /**
+   * Handles grid data changes based on drawing state
+   * @param {Array<Array<number>>} newData - New grid data
+   */
   const handleGridChange = (newData) => {
     if (isDrawingRef.current) {
       updateGrid(newData);
@@ -67,10 +102,18 @@ const YearGridContainer = ({
     }
   };
 
+  /**
+   * Handles tool selection changes
+   * @param {string} tool - Selected tool
+   * @param {number} newIntensity - Selected intensity level
+   */
   const handleToolChange = (tool, newIntensity) => {
     onToolChange(tool, newIntensity);
   };
 
+  /**
+   * Clears the canvas by setting all cells to 0
+   */
   const handleClearCanvas = () => {
     const canvas = document.querySelector(`#canvas-${year}`);
     const ctx = canvas.getContext('2d');
@@ -81,6 +124,9 @@ const YearGridContainer = ({
     GridDrawing.drawEmptyGrid(ctx, newGridData, CELL_SIZE, CELL_PADDING, GRID_COLORS);
   };
 
+  /**
+   * Handles undo action by restoring previous state
+   */
   const handleUndo = useCallback(() => {
     const previousState = history.undo();
     if (previousState) {
@@ -91,6 +137,9 @@ const YearGridContainer = ({
     }
   }, [history, setGridData, year]);
 
+  /**
+   * Handles redo action by restoring next state
+   */
   const handleRedo = useCallback(() => {
     const nextState = history.redo();
     if (nextState) {
@@ -101,14 +150,22 @@ const YearGridContainer = ({
     }
   }, [history, setGridData, year]);
 
-  // Add mouse enter/leave handlers
+  /**
+   * Handles mouse enter event
+   */
   const handleMouseEnter = () => setIsHovered(true);
+
+  /**
+   * Handles mouse leave event
+   */
   const handleMouseLeave = () => setIsHovered(false);
 
-  // Keyboard shortcuts only active when hovered
+  /**
+   * Sets up keyboard shortcuts for undo/redo
+   */
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (!isHovered) return;  // Only handle shortcuts when hovered
+      if (!isHovered) return;
 
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
@@ -264,4 +321,4 @@ const YearGridContainer = ({
   );
 };
 
-export default YearGridContainer; 
+export default YearGridContainer;

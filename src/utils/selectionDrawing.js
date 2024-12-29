@@ -1,3 +1,13 @@
+/**
+ * Draws a selection area rectangle with corner handles on the canvas
+ * 
+ * @param {CanvasRenderingContext2D} ctx - Canvas 2D rendering context to draw on
+ * @param {Object} start - Starting coordinates {row, col} of selection
+ * @param {Object} end - Ending coordinates {row, col} of selection
+ * @param {number} cellSize - Width/height of each cell in pixels
+ * @param {number} cellPadding - Padding between cells in pixels
+ * @param {Array<Array<number|null>>} gridData - 2D array of grid cell data
+ */
 export function drawSelectionArea(
   ctx,
   start,
@@ -8,32 +18,31 @@ export function drawSelectionArea(
 ) {
   if (!start || !end) return;
 
-  // Clear previous selection
+  // Clear any existing drawings
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-  // Get rectangle bounds
+  // Calculate rectangle boundaries
   const minRow = Math.min(start.row, end.row);
   const maxRow = Math.max(start.row, end.row);
   const minCol = Math.min(start.col, end.col);
   const maxCol = Math.max(start.col, end.col);
 
-  // Calculate exact pixel positions
+  // Convert grid coordinates to pixel positions
   const startX = minCol * (cellSize + cellPadding);
   const startY = minRow * (cellSize + cellPadding);
   const width = (maxCol - minCol + 1) * (cellSize + cellPadding) - cellPadding;
   const height = (maxRow - minRow + 1) * (cellSize + cellPadding) - cellPadding;
 
-  // Add selection padding offset (matches the canvas position offset)
+  // Standard padding for selection area
   const SELECTION_PADDING = 4;
   const offsetX = SELECTION_PADDING;
   const offsetY = SELECTION_PADDING;
 
-  // Draw selection rectangle
+  // Configure and draw dashed selection rectangle
   ctx.strokeStyle = '#1a73e8';
   ctx.lineWidth = 2;
   ctx.setLineDash([4, 4]);
   
-  // Account for the offset in the drawing
   ctx.strokeRect(
     startX + offsetX,
     startY + offsetY,
@@ -41,22 +50,26 @@ export function drawSelectionArea(
     height
   );
 
-  // Draw corner handles
+  // Configure corner handle styles
   const handleSize = 6;
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = '#1a73e8';
   ctx.lineWidth = 1;
   ctx.setLineDash([]);
 
-  // Helper function to draw handles
+  /**
+   * Draws a square handle centered at the given coordinates
+   * @param {number} x - X coordinate of handle center
+   * @param {number} y - Y coordinate of handle center
+   */
   const drawHandle = (x, y) => {
     ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
     ctx.strokeRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
   };
 
-  // Draw handles at corners with offset
-  drawHandle(startX + offsetX, startY + offsetY); // Top-left
-  drawHandle(startX + width + offsetX, startY + offsetY); // Top-right
-  drawHandle(startX + offsetX, startY + height + offsetY); // Bottom-left
-  drawHandle(startX + width + offsetX, startY + height + offsetY); // Bottom-right
+  // Draw corner handles
+  drawHandle(startX + offsetX, startY + offsetY);
+  drawHandle(startX + width + offsetX, startY + offsetY);
+  drawHandle(startX + offsetX, startY + height + offsetY);
+  drawHandle(startX + width + offsetX, startY + height + offsetY);
 } 

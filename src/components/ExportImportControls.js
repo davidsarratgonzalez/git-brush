@@ -1,31 +1,43 @@
+/**
+ * ExportImportControls Component
+ * 
+ * Provides UI controls and functionality for exporting and importing grid data.
+ * Handles file operations including JSON export with custom filenames and import validation.
+ */
+
 import React, { useRef } from 'react';
 import { formatGridDataForExport, parseImportedData } from '../utils/dataFormat';
 
+/**
+ * @param {Object} props
+ * @param {Array<number>} props.years - Array of years to export
+ * @param {Object} props.gridsData - Grid data keyed by year
+ * @param {Function} props.onImport - Callback when data is imported
+ */
 function ExportImportControls({ years, gridsData, onImport }) {
   const fileInputRef = useRef(null);
 
+  /**
+   * Handles exporting grid data to a JSON file.
+   * Prompts for filename and creates downloadable file.
+   */
   const handleExport = () => {
     const exportData = formatGridDataForExport(years, gridsData);
     const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
 
-    // Prompt for filename, empty default
     let filename = prompt('Enter a name for your file:');
     
-    // If user cancels
     if (filename === null) return;
     
-    // If empty, use default name
     if (!filename.trim()) {
       filename = 'gitbrush';
     }
     
-    // Add .json extension if not present
     if (!filename.toLowerCase().endsWith('.json')) {
       filename += '.json';
     }
 
-    // Create download link
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
@@ -34,10 +46,17 @@ function ExportImportControls({ years, gridsData, onImport }) {
     URL.revokeObjectURL(url);
   };
 
+  /**
+   * Triggers the hidden file input when Import button is clicked
+   */
   const handleImportClick = () => {
     fileInputRef.current.click();
   };
 
+  /**
+   * Handles file selection and import.
+   * Validates JSON format and processes imported data.
+   */
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -88,4 +107,4 @@ function ExportImportControls({ years, gridsData, onImport }) {
   );
 }
 
-export default ExportImportControls; 
+export default ExportImportControls;

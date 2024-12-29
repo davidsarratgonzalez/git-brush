@@ -1,7 +1,7 @@
-/* Add Font Awesome for icons */
+/* Import Font Awesome library for icon support */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
 
-/* GitHub-like styling */
+/* Define theme colors and variables */
 :root {
   --color-header-bg: #24292e;
   --color-header-text: #ffffff;
@@ -11,16 +11,17 @@
   --color-link-hover: #0366d6;
 }
 
-/* Container for all content */
+/* Main application container */
 .App {
   text-align: center;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   width: 100%;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: hidden;
 }
 
+/* Application header styling */
 .App-header {
   background-color: var(--color-header-bg);
   color: var(--color-header-text);
@@ -30,6 +31,7 @@
   width: 100%;
 }
 
+/* Header content wrapper */
 .App-header .header-content {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,23 +41,24 @@
   justify-content: space-between;
 }
 
+/* Header title styling */
 .App-header h1 {
   font-size: 24px;
   font-weight: 600;
   margin: 0;
 }
 
-/* Main content area */
+/* Main content wrapper */
 main {
   flex: 1;
   width: 100%;
-  max-width: 1280px; /* Maximum width for large screens */
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 16px;
-  box-sizing: border-box; /* Include padding in width calculation */
+  box-sizing: border-box;
 }
 
-/* Grids container */
+/* Container for year grids */
 .grids-container {
   width: 100%;
   display: flex;
@@ -63,7 +66,7 @@ main {
   align-items: center;
 }
 
-/* Individual year grid */
+/* Individual year grid container */
 .year-grid {
   width: 100%;
   max-width: 1280px;
@@ -73,10 +76,10 @@ main {
   border: 1px solid var(--color-border);
   margin-bottom: 24px;
   box-sizing: border-box;
-  position: relative; /* For absolute positioning of close button */
+  position: relative;
 }
 
-/* Grid header with all controls in one line */
+/* Grid controls layout */
 .grid-controls {
   display: flex;
   align-items: flex-start;
@@ -86,6 +89,7 @@ main {
   padding-top: 0;
 }
 
+/* Year number display */
 .year-number {
   font-size: 20px;
   font-weight: 600;
@@ -95,7 +99,7 @@ main {
   margin-top: 8px;
 }
 
-/* Center the toolbox */
+/* Grid header toolbox */
 .grid-header {
   margin: 0 auto;
   padding: 8px;
@@ -105,7 +109,7 @@ main {
   flex-grow: 0;
 }
 
-/* Simplified tools */
+/* Paint tools container */
 .paint-tools {
   display: flex;
   align-items: center;
@@ -113,6 +117,7 @@ main {
   justify-content: center;
 }
 
+/* Tool buttons group */
 .tool-buttons {
   display: flex;
   gap: 4px;
@@ -121,7 +126,7 @@ main {
   border-right: 1px solid var(--color-border);
 }
 
-/* Keep the tool button styles the same */
+/* Individual tool button */
 .tool-button {
   width: 32px;
   height: 32px;
@@ -136,22 +141,25 @@ main {
   transition: all 0.2s ease;
 }
 
+/* Tool button hover state */
 .tool-button:hover {
   background: #eaeef2;
   color: #24292f;
 }
 
+/* Active tool button state */
 .tool-button.active {
   background: #0969da;
   color: white;
 }
 
-/* Color palette */
+/* Color palette container */
 .color-palette {
   display: flex;
   gap: 4px;
 }
 
+/* Color selection button */
 .color-button {
   width: 28px;
   height: 28px;
@@ -164,6 +172,7 @@ main {
   transition: all 0.2s ease;
 }
 
+/* Color preview element */
 .color-preview {
   display: block;
   width: 100%;
@@ -173,15 +182,17 @@ main {
   transition: background-color 0.2s ease;
 }
 
+/* Color button hover state */
 .color-button:hover .color-preview {
   background-color: var(--hover-color);
 }
 
+/* Active color button state */
 .color-button.active {
   border-color: #0969da;
 }
 
-/* Close button */
+/* Remove year button */
 .remove-year {
   position: absolute;
   top: 16px;
@@ -202,12 +213,13 @@ main {
   flex-shrink: 0;
 }
 
+/* Remove year button hover state */
 .remove-year:hover {
   background: #f3f4f6;
   color: #cf222e;
 }
 
-/* Responsive adjustments */
+/* Responsive layout adjustments */
 @media (max-width: 1280px) {
   .year-grid {
     margin-left: 16px;
@@ -239,7 +251,7 @@ main {
   }
 }
 
-/* Footer */
+/* Footer styling */
 .App-footer {
   margin-top: auto;
   padding: 20px 16px;
@@ -248,22 +260,25 @@ main {
   font-size: 14px;
 }
 
+/* Footer links */
 .App-footer a {
   color: var(--color-header-text);
   text-decoration: none;
   transition: opacity 0.2s ease;
 }
 
+/* Footer link hover state */
 .App-footer a:hover {
   opacity: 0.8;
   text-decoration: underline;
 }
 
+/* Footer content wrapper */
 .App-footer .footer-content {
   text-align: center;
 }
 
-/* Header controls */
+/* Year controls container */
 .year-controls {
   display: flex;
   align-items: center;
@@ -271,6 +286,7 @@ main {
   gap: 8px;
 }
 
+/* Year input field */
 .year-controls input {
   width: 80px;
   padding: 4px 8px;
@@ -279,6 +295,7 @@ main {
   border-radius: 6px;
 }
 
+/* Year control buttons */
 .year-controls button {
   padding: 5px 12px;
   font-size: 14px;
@@ -291,44 +308,47 @@ main {
   transition: background-color 0.2s;
 }
 
+/* Year control button hover state */
 .year-controls button:hover {
   background-color: #2c974b;
 }
 
-/* Add a separator for the clear button */
+/* Clear canvas button */
 .tool-button.clear-canvas {
   border-left: none;
   margin-left: 4px;
   padding-left: 4px;
-  color: #cf222e; /* Always red */
+  color: #cf222e;
   box-shadow: none;
 }
 
+/* Clear canvas button hover state */
 .tool-button.clear-canvas:hover {
-  background: #f3f4f6; /* Just background change on hover */
+  background: #f3f4f6;
 }
 
-/* Add at the top, after :root */
+/* Global text selection prevention */
 * {
-  user-select: none; /* Prevent text selection everywhere */
+  user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
 }
 
-/* Export/Import controls side by side */
+/* Export/Import controls container */
 .export-import-controls {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
+/* Export and Import buttons */
 .export-button,
 .import-button {
   padding: 4px 12px;
   font-size: 14px;
   color: #ffffff;
-  background-color: #6f42c1; /* Purple-ish GitHub style */
+  background-color: #6f42c1;
   border: 1px solid rgba(27,31,35,0.15);
   border-radius: 6px;
   cursor: pointer;
@@ -336,28 +356,32 @@ main {
   transition: background-color 0.2s;
 }
 
+/* Export/Import buttons hover state */
 .export-button:hover,
 .import-button:hover {
   background-color: #5a32a8;
 }
 
+/* Disabled tool button state */
 .tool-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
+/* Disabled tool button hover state */
 .tool-button:disabled:hover {
   background: transparent;
   color: #57606a;
 }
 
-/* Add separator for undo/redo buttons */
+/* Undo/Redo button styling */
 .tool-button.undo-redo {
   border-left: 1px solid var(--color-border);
   margin-left: 4px;
   padding-left: 4px;
 }
 
+/* Visual separator element */
 .tool-separator {
   width: 1px;
   height: 20px;
