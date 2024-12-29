@@ -165,6 +165,13 @@ const YearGridContainer = ({
                 <i className="far fa-square"></i>
               </button>
               <button 
+                className={`tool-button ${activeTool === TOOLS.SELECT ? 'active' : ''}`}
+                onClick={() => handleToolChange(TOOLS.SELECT)}
+                title="Select Area"
+              >
+                <i className="fas fa-crop-alt"></i>
+              </button>
+              <button 
                 className="tool-button clear-canvas"
                 onClick={handleClearCanvas}
                 title="Clear Canvas"

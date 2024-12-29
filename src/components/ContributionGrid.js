@@ -4,6 +4,7 @@ import getClosestCell from '../utils/getClosestCell';
 import * as GridDrawing from '../utils/gridDrawing';
 import * as CellDrawing from '../utils/cellDrawing';
 import * as RectangleDrawing from '../utils/rectangleDrawing';
+import { drawSelectionArea } from '../utils/selectionDrawing';
 
 const ContributionGrid = ({ 
   id, 
@@ -18,6 +19,8 @@ const ContributionGrid = ({
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
   const [selectionStart, setSelectionStart] = useState(null);
+  const [selectionAnimationFrame, setSelectionAnimationFrame] = useState(null);
+  const selectionCanvasRef = useRef(null); // Separate canvas for selection overlay
 
   const CELL_SIZE = 10;
   const CELL_PADDING = 2;
@@ -35,6 +38,22 @@ const ContributionGrid = ({
     const ctx = canvasRef.current.getContext('2d');
     GridDrawing.drawEmptyGrid(ctx, gridData, CELL_SIZE, CELL_PADDING, GRID_COLORS);
   }, [gridData, CELL_SIZE, CELL_PADDING, GRID_COLORS]);
+
+  // Clear selection on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!selectionCanvasRef.current?.contains(e.target)) {
+        if (selectionAnimationFrame) {
+          cancelAnimationFrame(selectionAnimationFrame);
+          const ctx = selectionCanvasRef.current.getContext('2d');
+          ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [selectionAnimationFrame]);
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -89,6 +108,15 @@ const ContributionGrid = ({
         CELL_PADDING,
         GRID_COLORS
       );
+    } else if (activeTool === TOOLS.SELECT) {
+      const animationFrame = drawSelectionArea(
+        selectionCanvasRef.current.getContext('2d'),
+        coords,
+        coords,
+        CELL_SIZE,
+        CELL_PADDING
+      );
+      setSelectionAnimationFrame(animationFrame);
     }
   }, [
     activeTool,
@@ -98,7 +126,8 @@ const ContributionGrid = ({
     CELL_PADDING,
     GRID_COLORS,
     setGridData,
-    onMouseDown
+    onMouseDown,
+    selectionAnimationFrame
   ]);
 
   const handleMouseMove = useCallback((e) => {
@@ -139,6 +168,18 @@ const ContributionGrid = ({
         CELL_PADDING,
         GRID_COLORS
       );
+    } else if (activeTool === TOOLS.SELECT && isDrawingRef.current) {
+      if (selectionAnimationFrame) {
+        cancelAnimationFrame(selectionAnimationFrame);
+      }
+      const animationFrame = drawSelectionArea(
+        selectionCanvasRef.current.getContext('2d'),
+        selectionStart,
+        coords,
+        CELL_SIZE,
+        CELL_PADDING
+      );
+      setSelectionAnimationFrame(animationFrame);
     }
   }, [
     activeTool,
@@ -148,7 +189,8 @@ const ContributionGrid = ({
     CELL_SIZE,
     CELL_PADDING,
     GRID_COLORS,
-    setGridData
+    setGridData,
+    selectionAnimationFrame
   ]);
 
   const handleMouseUp = useCallback((e) => {
@@ -215,7 +257,7 @@ const ContributionGrid = ({
   }, [handleMouseMove, handleMouseUp]);
 
   return (
-    <div className="contribution-grid">
+    <div className="contribution-grid" style={{ position: 'relative' }}>
       <canvas
         id={id}
         ref={canvasRef}
@@ -224,6 +266,19 @@ const ContributionGrid = ({
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         style={{ width: '100%' }}
+      />
+      <canvas
+        ref={selectionCanvasRef}
+        width={53 * (CELL_SIZE + CELL_PADDING)}
+        height={7 * (CELL_SIZE + CELL_PADDING)}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          pointerEvents: 'none',
+          width: '100%',
+          height: '100%'
+        }}
       />
     </div>
   );

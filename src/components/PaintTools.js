@@ -1,11 +1,11 @@
 import React from 'react';
 
 export const TOOLS = {
-  PENCIL: 'pencil',
-  FILL: 'fill',
-  RECTANGLE: 'rectangle',
-  RECTANGLE_BORDER: 'rectangle_border',
-  SELECT: 'select'
+  PENCIL: 'PENCIL',
+  FILL: 'FILL',
+  RECTANGLE: 'RECTANGLE',
+  RECTANGLE_BORDER: 'RECTANGLE_BORDER',
+  SELECT: 'SELECT'
 };
 
 const COLORS = [
