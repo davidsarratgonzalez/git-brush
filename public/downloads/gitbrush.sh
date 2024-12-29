@@ -32,7 +32,7 @@ fi
 # Create initial README.md with git brush link
 echo "Made with [git brush](https://www.github.com/davidsarratgonzalez/git-brush)! 🎨" > README.md
 git add README.md
-git commit -m "Painted my GitHub contribution grid! 🎨
+git commit -m "Painted my GitHub contribution graph! 🎨
 
 Co-authored-by: David Sarrat González <113605621+davidsarratgonzalez@users.noreply.github.com>" > /dev/null
 
@@ -146,7 +146,9 @@ RESET=$'\e[0m'
 # Function to draw empty grid for a year
 draw_empty_grid() {
     local year=$1
+    # Get first day of year (0=Sunday)
     local start_day=$(date -j -f "%Y-%m-%d" "$year-01-01" "+%w")
+    # Get last day of year (0=Sunday)
     local end_day=$(date -j -f "%Y-%m-%d" "$year-12-31" "+%w")
     
     # Calculate if it's a leap year
@@ -206,7 +208,7 @@ draw_empty_grid() {
     echo "📅 Year progress:                            "
     echo "📈 Total progress:                           "
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -e "Made with ${RED}❤️${RESET} by David Sarrat González"
+    echo -e "Made with ${RED}❤️${RESET}  by David Sarrat González"
 }
 
 # Count total commits needed
@@ -246,18 +248,13 @@ while IFS= read -r line; do
             draw_empty_grid "$current_year"
         fi
         
-        # Get start of year day of week (0-6)
-        start_day=$(date -j -f "%Y-%m-%d" "$current_year-01-01" "+%w")
-        
-        # Use date command compatible with BSD/macOS
+        # Calculate days since start of year
         start_of_year=$(date -j -f "%Y-%m-%d" "${current_year}-01-01" "+%s")
         current_date=$(date -j -f "%Y-%m-%d" "$date" "+%s")
-        
-        # Calculate adjusted week number accounting for start day offset
         days_since_start=$(( (current_date - start_of_year) / (24 * 60 * 60) ))
-        week=$(( (days_since_start + start_day) / 7 ))
         
-        # Get day of week (0-6, where 0 is Sunday)
+        # Calculate week and day (0=Sunday)
+        week=$((days_since_start / 7))
         day=$(date -j -f "%Y-%m-%d" "$date" "+%w")
         
         # Update commit count for this cell
@@ -338,7 +335,7 @@ tput cnorm
 
 # Final completion message (still in alternate screen until the script exits)
 tput cup $((days + 13)) 0
-echo "We have successfully painted your GitHub contribution grid! 🎉"
+echo "We have successfully painted your GitHub contribution graph! 🎉"
 echo "Don't forget to push your changes to GitHub!"
 
 # Exit the script
