@@ -9,19 +9,27 @@ function ExportImportControls({ years, gridsData, onImport }) {
     const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
 
-    // Prompt for filename
-    const filename = prompt(
-      'Enter a name for your file:',
-      'gitbrush.json'
-    );
+    // Prompt for filename, empty default
+    let filename = prompt('Enter a name for your file:');
     
-    if (!filename) return;
+    // If user cancels
+    if (filename === null) return;
+    
+    // If empty, use default name
+    if (!filename.trim()) {
+      filename = 'gitbrush';
+    }
+    
+    // Add .json extension if not present
+    if (!filename.toLowerCase().endsWith('.json')) {
+      filename += '.json';
+    }
 
     // Create download link
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = filename.endsWith('.json') ? filename : `${filename}.json`;
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
   };
