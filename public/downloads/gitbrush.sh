@@ -44,9 +44,94 @@ weeks=53 # Account for years that span 53 weeks
 days=7
 current_year=""
 
-# Clear screen and hide cursor
+# We'll keep track of terminal width/height.
+ROWS=$(stty size | awk '{print $1}')
+COLS=$(stty size | awk '{print $2}')
+
+# A function to handle terminal resize (SIGWINCH).
+handle_resize() {
+    # Recalculate stty size
+    ROWS=$(stty size | awk '{print $1}')
+    COLS=$(stty size | awk '{print $2}')
+    
+    # Clear and redraw
+    clear
+    
+    # Redraw current year grid
+    if [ ! -z "$current_year" ]; then
+        draw_empty_grid "$current_year"
+        
+        # Re-print the current state of the grid
+        for ((w=0; w<weeks; w++)); do
+            for ((d=0; d<days; d++)); do
+                tput cup $((d + 2)) $((w * 2))
+                echo -n "${grid[$w,$d]} "
+            done
+        done
+        
+        # Re-print the progress section
+        local progress_y=$((ROWS - 3))
+        local progress_x=0
+        
+        # Ensure we have room to display progress
+        if [ $progress_y -gt 0 ]; then
+            # Position and print progress text
+            tput cup $progress_y $progress_x
+            echo -n "Progress: "
+            
+            # Calculate filled cells
+            local total_cells=$((weeks * days))
+            local filled_cells=0
+            for ((w=0; w<weeks; w++)); do
+                for ((d=0; d<days; d++)); do
+                    if [ "${grid[$w,$d]}" != "${NO_CONTRIBUTION}■${RESET}" ]; then
+                        ((filled_cells++))
+                    fi
+                done
+            done
+            
+            # Calculate and display percentage with bounds checking
+            local percentage=0
+            if [ $total_cells -gt 0 ]; then
+                percentage=$((filled_cells * 100 / total_cells))
+                # Ensure percentage doesn't exceed 100
+                [ $percentage -gt 100 ] && percentage=100
+            fi
+            echo -n "$percentage% complete"
+            
+            # Draw progress bar on next line if we have space
+            if [ $((progress_y + 1)) -lt $ROWS ]; then
+                tput cup $((progress_y + 1)) $progress_x
+                # Leave room for brackets and ensure positive width
+                local bar_width=$((COLS - 2))
+                [ $bar_width -lt 0 ] && bar_width=0
+                
+                local filled_width=0
+                [ $bar_width -gt 0 ] && filled_width=$((bar_width * percentage / 100))
+                
+                echo -n "["
+                for ((i=0; i<filled_width && i<bar_width; i++)); do
+                    echo -n "="
+                done
+                for ((i=filled_width; i<bar_width; i++)); do
+                    echo -n " "
+                done
+                echo -n "]"
+            fi
+        fi
+    fi
+}
+
+# Trap SIGWINCH to handle terminal resize
+trap handle_resize WINCH
+
+# Clear screen, switch to alternate screen, and hide cursor
+tput smcup
 clear
 tput civis
+
+# Make sure we clean up and restore screen/cursor on exit
+trap 'tput rmcup; tput cnorm; exit 0' EXIT
 
 # ANSI color codes matching GitHub's contribution colors
 NO_CONTRIBUTION=$'\e[38;5;238m'  # Dark gray
@@ -195,9 +280,9 @@ while IFS= read -r line; do
                     tput cup $((days + 8)) 35
                     echo -n "$i/$commit_count (Intensity: $intensity)"
                     
-                    # Clear previous year progress before showing new one  
+                    # Clear previous year progress
                     tput cup $((days + 9)) 35
-                    printf "%-30s" " " # Clear the line
+                    printf "%-30s" " "
                     tput cup $((days + 9)) 35
                     echo -n "${year_commits[$current_year]}/$total_commits"
                     
@@ -227,10 +312,10 @@ while IFS= read -r line; do
     fi
 done < "$JSON_FILE"
 
-# Show cursor again
+# Show cursor again before final message
 tput cnorm
 
-# Final completion message
+# Final completion message (still in alternate screen until the script exits)
 tput cup $((days + 13)) 0
 echo "We have successfully painted your GitHub contribution grid! 🎉"
 echo "Don't forget to push your changes to GitHub!"
