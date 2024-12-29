@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import ContributionGrid from './ContributionGrid';
 import { TOOLS, COLORS } from './PaintTools';
 import * as GridDrawing from '../utils/gridDrawing';
@@ -26,6 +26,8 @@ const YearGridContainer = ({
   const history = useHistory(gridData);
   const isDrawingRef = useRef(false);
   const startOfActionRef = useRef(null);
+  const containerRef = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Function to set grid data *without* pushing to history
   const updateGrid = (newData) => {
@@ -96,9 +98,15 @@ const YearGridContainer = ({
     }
   }, [history, setGridData, year]);
 
-  // Add keyboard shortcuts
+  // Add mouse enter/leave handlers
+  const handleMouseEnter = () => setIsHovered(true);
+  const handleMouseLeave = () => setIsHovered(false);
+
+  // Keyboard shortcuts only active when hovered
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (!isHovered) return;  // Only handle shortcuts when hovered
+
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
         if (e.shiftKey) {
@@ -114,10 +122,15 @@ const YearGridContainer = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleUndo, handleRedo]);
+  }, [handleUndo, handleRedo, isHovered]);
 
   return (
-    <div className="year-grid">
+    <div 
+      className="year-grid"
+      ref={containerRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <div className="grid-controls">
         <div className="year-number">{year}</div>
         <div className="grid-header">
