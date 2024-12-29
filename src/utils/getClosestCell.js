@@ -37,8 +37,31 @@ export default function getClosestCell(
     }
   }
 
-  col = Math.max(0, Math.min(col, gridData[0].length - 1));
-  row = Math.max(0, Math.min(row, 6));
+  // Find valid cell boundaries
+  const maxCol = gridData[0].length - 1;
+  const maxRow = gridData.length - 1;
 
-  return { row, col };
+  // Clamp to valid cells only (where cell !== null)
+  let validCol = Math.max(0, Math.min(col, maxCol));
+  let validRow = Math.max(0, Math.min(row, maxRow));
+
+  // Find nearest valid cell if current cell is null
+  while (validCol >= 0 && gridData[validRow][validCol] === null) {
+    validCol--;
+  }
+  
+  // If no valid cell found to the left, try right
+  if (validCol < 0) {
+    validCol = 0;
+    while (validCol <= maxCol && gridData[validRow][validCol] === null) {
+      validCol++;
+    }
+  }
+
+  // If still no valid cell found, clamp to nearest valid row
+  if (validCol > maxCol) {
+    validCol = Math.min(col, maxCol);
+  }
+
+  return { row: validRow, col: validCol };
 } 
