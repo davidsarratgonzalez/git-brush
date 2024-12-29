@@ -140,12 +140,14 @@ LEVEL2=$'\e[38;5;28m'   # Light green
 LEVEL3=$'\e[38;5;34m'   # Medium green
 LEVEL4=$'\e[38;5;40m'   # Dark green
 RED=$'\e[38;5;196m'     # Red color for heart
+WHITE=$'\e[38;5;255m'   # White color for non-year days
 RESET=$'\e[0m'
 
 # Function to draw empty grid for a year
 draw_empty_grid() {
     local year=$1
     local start_day=$(date -j -f "%Y-%m-%d" "$year-01-01" "+%w")
+    local end_day=$(date -j -f "%Y-%m-%d" "$year-12-31" "+%w")
     
     # Calculate if it's a leap year
     local is_leap_year=0
@@ -156,7 +158,7 @@ draw_empty_grid() {
     # Calculate total days in year
     local total_days=$((365 + is_leap_year))
     
-    # Initialize empty grid
+    # Initialize empty grid with gray squares
     for ((d=0; d<days; d++)); do
         for ((w=0; w<weeks; w++)); do
             grid[$w,$d]=" "
@@ -168,11 +170,30 @@ draw_empty_grid() {
     # Draw initial grid display
     echo -e "\n🎨 Contribution grid for $year:\n"
     
-    # Print grid
+    # Print grid - only first and last week's days
     for ((d=0; d<days; d++)); do
-        for ((w=0; w<weeks; w++)); do
-            echo -n "${grid[$w,$d]} "
+        # First week
+        if [ $d -lt $start_day ]; then
+            # Days before year starts are white
+            echo -n "${WHITE}■${RESET} "
+        else
+            # Days in first week of year are gray (will be colored later if needed)
+            echo -n "${NO_CONTRIBUTION}■${RESET} "
+        fi
+        
+        # Print gray squares for middle weeks
+        for ((w=1; w<weeks-1; w++)); do
+            echo -n "${NO_CONTRIBUTION}■${RESET} "
         done
+        
+        # Last week
+        if [ $d -gt $end_day ]; then
+            # Days after year ends are white
+            echo -n "${WHITE}■${RESET}"
+        else
+            # Days in last week of year are gray (will be colored later if needed)
+            echo -n "${NO_CONTRIBUTION}■${RESET}"
+        fi
         echo
     done
 
@@ -320,4 +341,5 @@ tput cup $((days + 13)) 0
 echo "We have successfully painted your GitHub contribution grid! 🎉"
 echo "Don't forget to push your changes to GitHub!"
 
+# Exit the script
 exit 0
