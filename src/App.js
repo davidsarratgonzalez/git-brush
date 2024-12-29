@@ -4,7 +4,7 @@ import YearGridContainer from './components/YearGridContainer';
 import YearControls from './components/YearControls';
 import useYearList from './hooks/useYearList';
 import ExportImportControls from './components/ExportImportControls';
-import { initializeYearGrid } from './utils/dataFormat';
+import { initializeYearGrid, formatGridDataForExport } from './utils/dataFormat';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { TOOLS } from './components/PaintTools';
 
@@ -86,6 +86,46 @@ function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleToolChange]);
+
+  // Add export shortcut
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Handle save shortcut
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        // Prompt for filename, empty default
+        let filename = prompt('Enter a name for your file:');
+        
+        // If user cancels
+        if (filename === null) return;
+        
+        // If empty, use default name
+        if (!filename.trim()) {
+          filename = 'gitbrush';
+        }
+        
+        // Add .json extension if not present
+        if (!filename.toLowerCase().endsWith('.json')) {
+          filename += '.json';
+        }
+
+        const exportData = formatGridDataForExport(years, gridsData);
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+
+        // Create download link
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [years, gridsData]);
 
   return (
     <div className="App">
