@@ -24,4 +24,4 @@ GitHub's contribution graph shows your activity through colored squares, where e
 
 ---
 
-**Note:** Please keep in mind that your contribution graph may take a few minutes to update.
+**Note:** Please keep in mind that your contribution graph may take [up to 24 hours to update](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-profile/managing-contribution-settings-on-your-profile/why-are-my-contributions-not-showing-up-on-my-profile#commit-was-made-less-than-24-hours-ago).
