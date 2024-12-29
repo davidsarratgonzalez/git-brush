@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ContributionGrid from './ContributionGrid';
-import { useState } from 'react';
 import { TOOLS, COLORS } from './PaintTools';
 import * as GridDrawing from '../utils/gridDrawing';
+import { useHistory } from '../hooks/useHistory';
 
 const CELL_SIZE = 10;
 const CELL_PADDING = 2;
@@ -17,6 +17,46 @@ const GRID_COLORS = [
 const YearGridContainer = ({ year, onRemove, gridData, setGridData }) => {
   const [activeTool, setActiveTool] = useState(TOOLS.PENCIL);
   const [intensity, setIntensity] = useState(1);
+  const history = useHistory(gridData);
+
+  // Use refs for immediate updates
+  const isDrawingRef = useRef(false);
+  const startOfActionRef = useRef(null);
+
+  // Function to set grid data *without* pushing to history
+  const updateGrid = (newData) => {
+    setGridData(newData);
+  };
+
+  // Push final result to history
+  const completeAction = (finalData) => {
+    history.push(JSON.parse(JSON.stringify(finalData)));
+    setGridData(finalData);
+  };
+
+  const handleMouseDown = () => {
+    isDrawingRef.current = true;
+    // Save a snapshot of the grid at mouse down,
+    // so we know exactly the state before the stroke
+    startOfActionRef.current = JSON.parse(JSON.stringify(gridData));
+  };
+
+  const handleMouseUp = () => {
+    if (isDrawingRef.current) {
+      isDrawingRef.current = false;
+      // Only push once the stroke is done
+      completeAction(gridData);
+    }
+  };
+
+  // Only “updateGrid” if still drawing; otherwise push immediately
+  const handleGridChange = (newData) => {
+    if (isDrawingRef.current) {
+      updateGrid(newData);
+    } else {
+      completeAction(newData);
+    }
+  };
 
   const handleToolChange = (tool, newIntensity) => {
     if (tool) setActiveTool(tool);
@@ -31,10 +71,49 @@ const YearGridContainer = ({ year, onRemove, gridData, setGridData }) => {
     const newGridData = gridData.map(row => 
       row.map(cell => cell !== null ? 0 : null)
     );
-    setGridData(newGridData);
-    
+    handleGridChange(newGridData);
     GridDrawing.drawEmptyGrid(ctx, newGridData, CELL_SIZE, CELL_PADDING, GRID_COLORS);
   };
+
+  const handleUndo = () => {
+    const previousState = history.undo();
+    if (previousState) {
+      setGridData(previousState);
+      const canvas = document.querySelector(`#canvas-${year}`);
+      const ctx = canvas.getContext('2d');
+      GridDrawing.drawEmptyGrid(ctx, previousState, CELL_SIZE, CELL_PADDING, GRID_COLORS);
+    }
+  };
+
+  const handleRedo = () => {
+    const nextState = history.redo();
+    if (nextState) {
+      setGridData(nextState);
+      const canvas = document.querySelector(`#canvas-${year}`);
+      const ctx = canvas.getContext('2d');
+      GridDrawing.drawEmptyGrid(ctx, nextState, CELL_SIZE, CELL_PADDING, GRID_COLORS);
+    }
+  };
+
+  // Add keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo]);
 
   return (
     <div className="year-grid">
@@ -78,6 +157,22 @@ const YearGridContainer = ({ year, onRemove, gridData, setGridData }) => {
               >
                 <i className="far fa-file"></i>
               </button>
+              <button 
+                className="tool-button"
+                onClick={handleUndo}
+                disabled={!history.canUndo}
+                title="Undo"
+              >
+                <i className="fas fa-undo"></i>
+              </button>
+              <button 
+                className="tool-button"
+                onClick={handleRedo}
+                disabled={!history.canRedo}
+                title="Redo"
+              >
+                <i className="fas fa-redo"></i>
+              </button>
             </div>
             <div className="color-palette">
               {COLORS.map(({ id, name, color, hoverColor }) => (
@@ -111,7 +206,9 @@ const YearGridContainer = ({ year, onRemove, gridData, setGridData }) => {
         activeTool={activeTool}
         intensity={intensity}
         gridData={gridData}
-        setGridData={setGridData}
+        setGridData={handleGridChange}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
       />
     </div>
   );

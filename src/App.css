@@ -340,3 +340,20 @@ main {
 .import-button:hover {
   background-color: #5a32a8;
 }
+
+.tool-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tool-button:disabled:hover {
+  background: transparent;
+  color: #57606a;
+}
+
+/* Add separator for undo/redo buttons */
+.tool-button.undo-redo {
+  border-left: 1px solid var(--color-border);
+  margin-left: 4px;
+  padding-left: 4px;
+}

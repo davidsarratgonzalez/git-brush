@@ -5,7 +5,16 @@ import * as GridDrawing from '../utils/gridDrawing';
 import * as CellDrawing from '../utils/cellDrawing';
 import * as RectangleDrawing from '../utils/rectangleDrawing';
 
-const ContributionGrid = ({ id, year, activeTool, intensity, gridData, setGridData }) => {
+const ContributionGrid = ({ 
+  id, 
+  year, 
+  activeTool, 
+  intensity, 
+  gridData, 
+  setGridData,
+  onMouseDown,
+  onMouseUp
+}) => {
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
   const [selectionStart, setSelectionStart] = useState(null);
@@ -29,16 +38,18 @@ const ContributionGrid = ({ id, year, activeTool, intensity, gridData, setGridDa
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
+    isDrawingRef.current = true;
+    onMouseDown?.(); // Notify parent
+
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = canvasRef.current.width / rect.width;
     const x = (e.clientX - rect.left) * scale;
     const y = (e.clientY - rect.top) * scale;
 
     const coords = getClosestCell(x, y, gridData, CELL_SIZE, CELL_PADDING);
-
-    isDrawingRef.current = true;
     setSelectionStart(coords);
 
+    // Initial draw operation
     if (activeTool === TOOLS.PENCIL) {
       CellDrawing.drawCell(
         coords, 
@@ -50,34 +61,6 @@ const ContributionGrid = ({ id, year, activeTool, intensity, gridData, setGridDa
         CELL_PADDING, 
         GRID_COLORS
       );
-    } else if (activeTool === TOOLS.FILL) {
-      CellDrawing.fillArea(
-        coords, 
-        gridData, 
-        setGridData, 
-        intensity, 
-        canvasRef,
-        CELL_SIZE, 
-        CELL_PADDING, 
-        GRID_COLORS
-      );
-    } else if (
-      activeTool === TOOLS.RECTANGLE ||
-      activeTool === TOOLS.RECTANGLE_BORDER
-    ) {
-      RectangleDrawing.drawRectangle(
-        coords,
-        coords,
-        activeTool === TOOLS.RECTANGLE_BORDER,
-        false,
-        canvasRef,
-        gridData,
-        setGridData,
-        intensity,
-        CELL_SIZE,
-        CELL_PADDING,
-        GRID_COLORS
-      );
     }
   }, [
     activeTool,
@@ -86,7 +69,8 @@ const ContributionGrid = ({ id, year, activeTool, intensity, gridData, setGridDa
     CELL_SIZE,
     CELL_PADDING,
     GRID_COLORS,
-    setGridData
+    setGridData,
+    onMouseDown
   ]);
 
   const handleMouseMove = useCallback((e) => {
@@ -140,7 +124,7 @@ const ContributionGrid = ({ id, year, activeTool, intensity, gridData, setGridDa
   ]);
 
   const handleMouseUp = useCallback((e) => {
-    if (isDrawingRef.current && selectionStart) {
+    if (isDrawingRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
       const scale = canvasRef.current.width / rect.width;
       const x = (e.clientX - rect.left) * scale;
@@ -166,9 +150,10 @@ const ContributionGrid = ({ id, year, activeTool, intensity, gridData, setGridDa
           GRID_COLORS
         );
       }
+      isDrawingRef.current = false;
+      setSelectionStart(null);
+      onMouseUp?.(); // Notify parent
     }
-    isDrawingRef.current = false;
-    setSelectionStart(null);
   }, [
     activeTool,
     gridData,
@@ -177,7 +162,8 @@ const ContributionGrid = ({ id, year, activeTool, intensity, gridData, setGridDa
     CELL_SIZE,
     CELL_PADDING,
     GRID_COLORS,
-    setGridData
+    setGridData,
+    onMouseUp
   ]);
 
   // Global mouse events
