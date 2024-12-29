@@ -68,7 +68,14 @@ function App() {
       if (e.target.tagName === 'INPUT') return;
 
       const key = e.key;
-      // Map keys 1-5 to intensities 0-4
+      
+      // Prevent browser actions for Ctrl+Z and Ctrl+Y
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'y')) {
+        e.preventDefault();
+        return;
+      }
+
+      // Handle number shortcuts for colors
       if (/^[1-5]$/.test(key)) {
         e.preventDefault();
         const intensity = parseInt(key) - 1;
@@ -125,7 +132,7 @@ function App() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Made with 💚 by David Sarrat González
+            Made with 💚 by <strong>David Sarrat González</strong>
           </a>
         </div>
       </footer>

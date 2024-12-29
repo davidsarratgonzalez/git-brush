@@ -61,6 +61,34 @@ const ContributionGrid = ({
         CELL_PADDING, 
         GRID_COLORS
       );
+    } else if (activeTool === TOOLS.FILL) {
+      CellDrawing.fillArea(
+        coords, 
+        gridData, 
+        setGridData, 
+        intensity, 
+        canvasRef,
+        CELL_SIZE, 
+        CELL_PADDING, 
+        GRID_COLORS
+      );
+    } else if (
+      activeTool === TOOLS.RECTANGLE ||
+      activeTool === TOOLS.RECTANGLE_BORDER
+    ) {
+      RectangleDrawing.drawRectangle(
+        coords,
+        coords,
+        activeTool === TOOLS.RECTANGLE_BORDER,
+        false,
+        canvasRef,
+        gridData,
+        setGridData,
+        intensity,
+        CELL_SIZE,
+        CELL_PADDING,
+        GRID_COLORS
+      );
     }
   }, [
     activeTool,
