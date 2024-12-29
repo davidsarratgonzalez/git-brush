@@ -6,10 +6,9 @@ import * as GridDrawing from '../utils/gridDrawing';
 import * as CellDrawing from '../utils/cellDrawing';
 import * as RectangleDrawing from '../utils/rectangleDrawing';
 
-const ContributionGrid = ({ year, activeTool, intensity }) => {
+const ContributionGrid = ({ id, year, activeTool, intensity, gridData, setGridData }) => {
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
-  const [gridData, setGridData] = useState([]);
   const [selectionStart, setSelectionStart] = useState(null);
 
   // Pull calendar info from our custom hook
@@ -85,7 +84,8 @@ const ContributionGrid = ({ year, activeTool, intensity }) => {
     intensity,
     CELL_SIZE,
     CELL_PADDING,
-    GRID_COLORS
+    GRID_COLORS,
+    setGridData
   ]);
 
   const handleMouseMove = useCallback((e) => {
@@ -134,7 +134,8 @@ const ContributionGrid = ({ year, activeTool, intensity }) => {
     selectionStart,
     CELL_SIZE,
     CELL_PADDING,
-    GRID_COLORS
+    GRID_COLORS,
+    setGridData
   ]);
 
   const handleMouseUp = useCallback((e) => {
@@ -174,7 +175,8 @@ const ContributionGrid = ({ year, activeTool, intensity }) => {
     selectionStart,
     CELL_SIZE,
     CELL_PADDING,
-    GRID_COLORS
+    GRID_COLORS,
+    setGridData
   ]);
 
   // Global mouse events
@@ -225,12 +227,14 @@ const ContributionGrid = ({ year, activeTool, intensity }) => {
     isValidDay,
     CELL_SIZE,
     CELL_PADDING,
-    GRID_COLORS
+    GRID_COLORS,
+    setGridData
   ]);
 
   return (
     <div className="contribution-grid">
       <canvas
+        id={id}
         ref={canvasRef}
         width={53 * (CELL_SIZE + CELL_PADDING)}
         height={7 * (CELL_SIZE + CELL_PADDING)}

@@ -294,3 +294,24 @@ main {
 .year-controls button:hover {
   background-color: #2c974b;
 }
+
+/* Add a separator for the clear button */
+.tool-button.clear-canvas {
+  border-left: none;
+  margin-left: 4px;
+  padding-left: 4px;
+  color: #cf222e; /* Always red */
+  box-shadow: none;
+}
+
+.tool-button.clear-canvas:hover {
+  background: #f3f4f6; /* Just background change on hover */
+}
+
+/* Add at the top, after :root */
+* {
+  user-select: none; /* Prevent text selection everywhere */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}

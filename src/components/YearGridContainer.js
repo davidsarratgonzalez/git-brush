@@ -1,17 +1,44 @@
 import React from 'react';
 import ContributionGrid from './ContributionGrid';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { TOOLS, COLORS } from './PaintTools';
+import * as GridDrawing from '../utils/gridDrawing';
+
+const CELL_SIZE = 10;
+const CELL_PADDING = 2;
+const GRID_COLORS = [
+  '#ebedf0', // 0: empty/none
+  '#9be9a8', // 1: light
+  '#40c463', // 2: medium
+  '#30a14e', // 3: dark
+  '#216e39'  // 4: darker
+];
 
 const YearGridContainer = ({ year, onRemove }) => {
   const [activeTool, setActiveTool] = useState(TOOLS.PENCIL);
   const [intensity, setIntensity] = useState(1);
+  const [gridData, setGridData] = useState([]);
+
+  const handleSetGridData = useCallback((newData) => {
+    setGridData(newData);
+  }, []);
 
   const handleToolChange = (tool, newIntensity) => {
     if (tool) setActiveTool(tool);
     if (newIntensity !== undefined) {
       setIntensity(newIntensity);
     }
+  };
+
+  const handleClearCanvas = () => {
+    const canvas = document.querySelector(`#canvas-${year}`);
+    const ctx = canvas.getContext('2d');
+    const newGridData = gridData.map(row => 
+      row.map(cell => cell !== null ? 0 : null)
+    );
+    setGridData(newGridData);
+    
+    GridDrawing.drawEmptyGrid(ctx, newGridData, CELL_SIZE, CELL_PADDING, GRID_COLORS);
   };
 
   return (
@@ -49,6 +76,13 @@ const YearGridContainer = ({ year, onRemove }) => {
               >
                 <i className="far fa-square"></i>
               </button>
+              <button 
+                className="tool-button clear-canvas"
+                onClick={handleClearCanvas}
+                title="Clear Canvas"
+              >
+                <i className="far fa-file"></i>
+              </button>
             </div>
             <div className="color-palette">
               {COLORS.map(({ id, name, color, hoverColor }) => (
@@ -77,9 +111,12 @@ const YearGridContainer = ({ year, onRemove }) => {
         ×
       </button>
       <ContributionGrid 
+        id={`canvas-${year}`}
         year={year}
         activeTool={activeTool}
         intensity={intensity}
+        gridData={gridData}
+        setGridData={handleSetGridData}
       />
     </div>
   );
