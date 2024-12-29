@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import YearGridContainer from './components/YearGridContainer';
 import YearControls from './components/YearControls';
@@ -6,6 +6,7 @@ import useYearList from './hooks/useYearList';
 import ExportImportControls from './components/ExportImportControls';
 import { initializeYearGrid } from './utils/dataFormat';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import { TOOLS } from './components/PaintTools';
 
 function App() {
   const {
@@ -17,7 +18,9 @@ function App() {
     removeYear: removeYearBase
   } = useYearList();
 
-  const [gridsData, setGridsData] = useLocalStorage();
+  const [gridsData, setGridsData] = useState({});
+  const [activeTool, setActiveTool] = useState(TOOLS.PENCIL);
+  const [intensity, setIntensity] = useState(1);
 
   React.useEffect(() => {
     if (Object.keys(gridsData).length > 0) {
@@ -48,6 +51,13 @@ function App() {
   const handleImport = (importedGrids) => {
     setGridsData(importedGrids);
     setYears(Object.keys(importedGrids).map(Number).sort((a, b) => b - a));
+  };
+
+  const handleToolChange = (tool, newIntensity) => {
+    if (tool) setActiveTool(tool);
+    if (newIntensity !== undefined) {
+      setIntensity(newIntensity);
+    }
   };
 
   return (
@@ -81,6 +91,9 @@ function App() {
                   [year]: newData
                 }));
               }}
+              activeTool={activeTool}
+              intensity={intensity}
+              onToolChange={handleToolChange}
             />
           ))}
         </div>

@@ -14,12 +14,16 @@ const GRID_COLORS = [
   '#216e39'  // 4: darker
 ];
 
-const YearGridContainer = ({ year, onRemove, gridData, setGridData }) => {
-  const [activeTool, setActiveTool] = useState(TOOLS.PENCIL);
-  const [intensity, setIntensity] = useState(1);
+const YearGridContainer = ({ 
+  year, 
+  onRemove, 
+  gridData, 
+  setGridData,
+  activeTool,
+  intensity,
+  onToolChange
+}) => {
   const history = useHistory(gridData);
-
-  // Use refs for immediate updates
   const isDrawingRef = useRef(false);
   const startOfActionRef = useRef(null);
 
@@ -59,10 +63,7 @@ const YearGridContainer = ({ year, onRemove, gridData, setGridData }) => {
   };
 
   const handleToolChange = (tool, newIntensity) => {
-    if (tool) setActiveTool(tool);
-    if (newIntensity !== undefined) {
-      setIntensity(newIntensity);
-    }
+    onToolChange(tool, newIntensity);
   };
 
   const handleClearCanvas = () => {
