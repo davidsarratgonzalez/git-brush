@@ -15,13 +15,15 @@ const ContributionGrid = ({
   gridData, 
   setGridData,
   onMouseDown,
-  onMouseUp
+  onMouseUp,
+  onToolChange
 }) => {
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
   const [selectionStart, setSelectionStart] = useState(null);
   const [selectionAnimationFrame, setSelectionAnimationFrame] = useState(null);
   const selectionCanvasRef = useRef(null); // Separate canvas for selection overlay
+  const [pastePreviewPos, setPastePreviewPos] = useState(null);
 
   const CELL_SIZE = 10;
   const CELL_PADDING = 2;
@@ -86,6 +88,76 @@ const ContributionGrid = ({
     });
     return unsubscribe;
   }, [id, clearSelection]);
+
+  // Handle copy/cut keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!selectionManager.hasSelection()) return;
+      
+      // Only handle if this grid has the current selection
+      if (selectionManager.currentSelection.gridId !== id) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        selectionManager.copySelection(gridData);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
+        e.preventDefault();
+        selectionManager.cutSelection(gridData, setGridData);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [id, gridData, setGridData]);
+
+  // Add paste preview effect
+  useEffect(() => {
+    if (activeTool === TOOLS.PASTE && selectionManager.hasCopiedData() && pastePreviewPos) {
+      const ctx = selectionCanvasRef.current.getContext('2d');
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      
+      const { data, width, height } = selectionManager.copiedData;
+      
+      // Draw preview
+      for (let r = 0; r < height; r++) {
+        if (pastePreviewPos.row + r >= gridData.length) continue;
+        
+        for (let c = 0; c < width; c++) {
+          if (pastePreviewPos.col + c >= gridData[0].length) continue;
+          
+          // Only show preview on valid cells (not null)
+          if (gridData[pastePreviewPos.row + r][pastePreviewPos.col + c] === null) continue;
+          
+          const x = (pastePreviewPos.col + c) * (CELL_SIZE + CELL_PADDING);
+          const y = (pastePreviewPos.row + r) * (CELL_SIZE + CELL_PADDING);
+          
+          // Semi-transparent preview
+          ctx.globalAlpha = 0.5;
+          ctx.fillStyle = GRID_COLORS[data[r][c]];
+          ctx.fillRect(
+            x + SELECTION_PADDING, 
+            y + SELECTION_PADDING, 
+            CELL_SIZE, 
+            CELL_SIZE
+          );
+          ctx.globalAlpha = 1;
+        }
+      }
+    }
+  }, [activeTool, pastePreviewPos, CELL_SIZE, CELL_PADDING, GRID_COLORS, gridData]);
+
+  // Handle paste keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v' && selectionManager.hasCopiedData()) {
+        e.preventDefault();
+        onToolChange?.(TOOLS.PASTE);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -154,8 +226,42 @@ const ContributionGrid = ({
       // Register this selection with the manager
       selectionManager.setSelection({
         gridId: id,
-        clearFn: clearSelection
+        clearFn: clearSelection,
+        startCoords: coords,
+        endCoords: coords
       });
+    } else if (activeTool === TOOLS.PASTE && selectionManager.hasCopiedData() && pastePreviewPos) {
+      e.preventDefault();
+      const { data, width, height } = selectionManager.copiedData;
+      const newGrid = [...gridData];
+      
+      // Apply paste
+      let hasValidPaste = false; // Track if we actually pasted anything
+      
+      for (let r = 0; r < height; r++) {
+        if (pastePreviewPos.row + r >= gridData.length) continue;
+        newGrid[pastePreviewPos.row + r] = [...gridData[pastePreviewPos.row + r]];
+        
+        for (let c = 0; c < width; c++) {
+          if (pastePreviewPos.col + c >= gridData[0].length) continue;
+          
+          // Only paste on valid cells (not null)
+          if (gridData[pastePreviewPos.row + r][pastePreviewPos.col + c] !== null) {
+            newGrid[pastePreviewPos.row + r][pastePreviewPos.col + c] = data[r][c];
+            hasValidPaste = true;
+          }
+        }
+      }
+      
+      // Only update if we actually pasted something
+      if (hasValidPaste) {
+        setGridData(newGrid);
+      }
+      
+      // Clear preview
+      const ctx = selectionCanvasRef.current.getContext('2d');
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      setPastePreviewPos(null);
     }
   }, [
     activeTool,
@@ -166,9 +272,9 @@ const ContributionGrid = ({
     GRID_COLORS,
     setGridData,
     onMouseDown,
-    selectionAnimationFrame,
     id,
-    clearSelection
+    clearSelection,
+    pastePreviewPos
   ]);
 
   const handleMouseMove = useCallback((e) => {
@@ -219,6 +325,13 @@ const ContributionGrid = ({
         CELL_PADDING,
         gridData
       );
+      
+      // Update selection end coordinates
+      if (selectionManager.currentSelection?.gridId === id) {
+        selectionManager.currentSelection.endCoords = coords;
+      }
+    } else if (activeTool === TOOLS.PASTE && selectionManager.hasCopiedData()) {
+      setPastePreviewPos(coords);
     }
   }, [
     activeTool,
@@ -229,7 +342,8 @@ const ContributionGrid = ({
     CELL_PADDING,
     GRID_COLORS,
     setGridData,
-    selectionAnimationFrame
+    id,
+    pastePreviewPos
   ]);
 
   const handleMouseUp = useCallback((e) => {
@@ -294,6 +408,17 @@ const ContributionGrid = ({
       window.removeEventListener('mouseup', handleGlobalMouseUp);
     };
   }, [handleMouseMove, handleMouseUp]);
+
+  // Clear paste preview when changing tools
+  useEffect(() => {
+    if (activeTool !== TOOLS.PASTE) {
+      setPastePreviewPos(null);
+      if (selectionCanvasRef.current) {
+        const ctx = selectionCanvasRef.current.getContext('2d');
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      }
+    }
+  }, [activeTool]);
 
   return (
     <div 

@@ -3,6 +3,7 @@ import ContributionGrid from './ContributionGrid';
 import { TOOLS, COLORS } from './PaintTools';
 import * as GridDrawing from '../utils/gridDrawing';
 import { useHistory } from '../hooks/useHistory';
+import { selectionManager } from '../utils/selectionManager';
 
 const CELL_SIZE = 10;
 const CELL_PADDING = 2;
@@ -23,6 +24,7 @@ const YearGridContainer = ({
   intensity,
   onToolChange
 }) => {
+  const id = `canvas-${year}`;
   const history = useHistory(gridData);
   const isDrawingRef = useRef(false);
   const startOfActionRef = useRef(null);
@@ -172,6 +174,31 @@ const YearGridContainer = ({
                 <i className="fas fa-crop-alt"></i>
               </button>
               <button 
+                className="tool-button"
+                onClick={() => selectionManager.copySelection(gridData)}
+                disabled={!selectionManager.hasSelection() || selectionManager.currentSelection?.gridId !== id}
+                title="Copy Selection (Ctrl+C)"
+              >
+                <i className="far fa-copy"></i>
+              </button>
+              <button 
+                className="tool-button"
+                onClick={() => selectionManager.cutSelection(gridData, setGridData)}
+                disabled={!selectionManager.hasSelection() || selectionManager.currentSelection?.gridId !== id}
+                title="Cut Selection (Ctrl+X)"
+              >
+                <i className="fas fa-cut"></i>
+              </button>
+              <button 
+                className="tool-button"
+                onClick={() => handleToolChange(TOOLS.PASTE)}
+                disabled={!selectionManager.hasCopiedData()}
+                title="Paste (Ctrl+V)"
+              >
+                <i className="far fa-clipboard"></i>
+              </button>
+              <div className="tool-separator"></div>
+              <button 
                 className="tool-button clear-canvas"
                 onClick={handleClearCanvas}
                 title="Clear Canvas"
@@ -222,7 +249,7 @@ const YearGridContainer = ({
         ×
       </button>
       <ContributionGrid 
-        id={`canvas-${year}`}
+        id={id}
         year={year}
         activeTool={activeTool}
         intensity={intensity}
@@ -230,6 +257,7 @@ const YearGridContainer = ({
         setGridData={handleGridChange}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
+        onToolChange={handleToolChange}
       />
     </div>
   );

@@ -357,3 +357,12 @@ main {
   margin-left: 4px;
   padding-left: 4px;
 }
+
+.tool-separator {
+  width: 1px;
+  height: 20px;
+  background-color: #e1e4e8;
+  margin: 0 8px;
+  display: inline-block;
+  vertical-align: middle;
+}
