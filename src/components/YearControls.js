@@ -9,8 +9,11 @@ const YearControls = ({ newYear, onYearChange, onAddYear }) => {
         onChange={(e) => onYearChange(parseInt(e.target.value))}
         min="2008"
         max="2100"
+        placeholder="Year"
       />
-      <button onClick={onAddYear}>Add Year</button>
+      <button onClick={onAddYear}>
+        Add year
+      </button>
     </div>
   );
 };

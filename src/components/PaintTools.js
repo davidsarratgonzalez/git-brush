@@ -1,14 +1,22 @@
 import React from 'react';
 
-const PaintTools = ({ activeTool, onToolChange, intensity, onIntensityChange }) => {
-  const COLORS = [
-    { id: 0, name: 'None', color: '#ebedf0' },
-    { id: 1, name: 'Light', color: '#9be9a8' },
-    { id: 2, name: 'Medium', color: '#40c463' },
-    { id: 3, name: 'Dark', color: '#30a14e' },
-    { id: 4, name: 'Darker', color: '#216e39' }
-  ];
+export const TOOLS = {
+  PENCIL: 'pencil',
+  FILL: 'fill',
+  RECTANGLE: 'rectangle',
+  RECTANGLE_BORDER: 'rectangle_border',
+  SELECT: 'select'
+};
 
+const COLORS = [
+  { id: 0, name: 'None', color: '#ebedf0', hoverColor: '#dfe1e4' },
+  { id: 1, name: 'Light', color: '#9be9a8', hoverColor: '#8cd89c' },
+  { id: 2, name: 'Medium', color: '#40c463', hoverColor: '#3ab558' },
+  { id: 3, name: 'Dark', color: '#30a14e', hoverColor: '#2c9447' },
+  { id: 4, name: 'Darker', color: '#216e39', hoverColor: '#1d6333' }
+];
+
+const PaintTools = ({ activeTool, onToolChange, intensity, onIntensityChange }) => {
   return (
     <div className="paint-tools">
       <div className="tool-buttons">
@@ -40,23 +48,15 @@ const PaintTools = ({ activeTool, onToolChange, intensity, onIntensityChange }) 
         >
           <i className="far fa-square"></i>
         </button>
-        <button 
-          className={`tool-button ${activeTool === TOOLS.SELECT ? 'active' : ''}`}
-          onClick={() => onToolChange(TOOLS.SELECT)}
-          title="Select Area"
-        >
-          <i className="fas fa-vector-square"></i>
-        </button>
       </div>
       <div className="color-palette">
-        {COLORS.map(({ id, name, color }) => (
+        {COLORS.map(({ id, name, color, hoverColor }) => (
           <button
             key={id}
             className={`color-button ${intensity === id ? 'active' : ''}`}
             style={{ 
               '--color': color,
-              '--hover-color': color,
-              '--active-color': color 
+              '--hover-color': hoverColor
             }}
             title={name}
             onClick={() => onIntensityChange(id)}
@@ -69,12 +69,5 @@ const PaintTools = ({ activeTool, onToolChange, intensity, onIntensityChange }) 
   );
 };
 
-export const TOOLS = {
-  PENCIL: 'pencil',
-  FILL: 'fill',
-  RECTANGLE: 'rectangle',
-  RECTANGLE_BORDER: 'rectangle_border',
-  SELECT: 'select'
-};
-
-export default PaintTools; 
+export default PaintTools;
+export { COLORS }; 

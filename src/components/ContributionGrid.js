@@ -1,20 +1,15 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import PaintTools, { TOOLS } from './PaintTools';
+import { TOOLS } from './PaintTools';
 import useGridLogic from '../hooks/useGridLogic';
 import getClosestCell from '../utils/getClosestCell';
-
-// Re-import our helpers as stable references (no destructuring),
-// so we won't have ESLint issues about "no-undef" or "invalid dependencies"
 import * as GridDrawing from '../utils/gridDrawing';
 import * as CellDrawing from '../utils/cellDrawing';
 import * as RectangleDrawing from '../utils/rectangleDrawing';
 
-const ContributionGrid = ({ year, onGridChange }) => {
+const ContributionGrid = ({ year, activeTool, intensity }) => {
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
-  const [intensity, setIntensity] = useState(1);
   const [gridData, setGridData] = useState([]);
-  const [activeTool, setActiveTool] = useState(TOOLS.PENCIL);
   const [selectionStart, setSelectionStart] = useState(null);
 
   // Pull calendar info from our custom hook
@@ -31,13 +26,6 @@ const ContributionGrid = ({ year, onGridChange }) => {
     '#30a14e', // 3: dark
     '#216e39'  // 4: darker
   ], []);
-
-  const handleToolChange = useCallback((tool, newIntensity) => {
-    setActiveTool(tool);
-    if (newIntensity !== undefined) {
-      setIntensity(newIntensity);
-    }
-  }, []);
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -242,12 +230,6 @@ const ContributionGrid = ({ year, onGridChange }) => {
 
   return (
     <div className="contribution-grid">
-      <PaintTools
-        activeTool={activeTool}
-        onToolChange={handleToolChange}
-        intensity={intensity}
-        onIntensityChange={setIntensity}
-      />
       <canvas
         ref={canvasRef}
         width={53 * (CELL_SIZE + CELL_PADDING)}
